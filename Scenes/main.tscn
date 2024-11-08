@@ -1,0 +1,165 @@
+[gd_scene load_steps=6 format=3 uid="uid://byexcr20v7axg"]
+
+[ext_resource type="Script" path="res://Scripts/StateMachine/StateMachine.gd" id="1_srbky"]
+[ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_AnyKeyToContinue.gd" id="2_4qlki"]
+[ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_MainMenu.gd" id="3_25r5e"]
+[ext_resource type="Script" path="res://Scripts/Decorators/ControlDecorator.gd" id="4_w0rml"]
+[ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState.gd" id="5_a16gp"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.501961, 0.501961, 0.501961, 1)
+
+[node name="StateMachine" type="Node" parent="." node_paths=PackedStringArray("initial_state")]
+script = ExtResource("1_srbky")
+initial_state = NodePath("SplashScreen")
+
+[node name="SplashScreen" type="Control" parent="StateMachine" node_paths=PackedStringArray("next_state")]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_4qlki")
+next_state = NodePath("../Menu")
+time_out_in_seconds = 3.0
+fade_in = true
+fade_out = true
+
+[node name="MarginContainer" type="MarginContainer" parent="StateMachine/SplashScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="CenterContainer" type="CenterContainer" parent="StateMachine/SplashScreen/MarginContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="StateMachine/SplashScreen/MarginContainer/CenterContainer"]
+custom_minimum_size = Vector2(1000, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 196
+text = "Mirror Qix"
+clip_text = true
+
+[node name="Menu" type="Control" parent="StateMachine"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_25r5e")
+
+[node name="MarginContainer" type="MarginContainer" parent="StateMachine/Menu"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="CenterContainer" type="CenterContainer" parent="StateMachine/Menu/MarginContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="StateMachine/Menu/MarginContainer/CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Button_Play" type="Button" parent="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 26
+text = "Play"
+
+[node name="ControlDecorator" type="Node" parent="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Play"]
+script = ExtResource("4_w0rml")
+
+[node name="Button_Credits" type="Button" parent="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 26
+text = "Credits
+"
+
+[node name="ControlDecorator" type="Node" parent="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Credits" node_paths=PackedStringArray("loads_after")]
+script = ExtResource("4_w0rml")
+loads_after = NodePath("../../Button_Play/ControlDecorator")
+
+[node name="Button_Quit" type="Button" parent="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 26
+text = "Quit"
+
+[node name="ControlDecorator" type="Node" parent="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Quit" node_paths=PackedStringArray("loads_after")]
+script = ExtResource("4_w0rml")
+loads_after = NodePath("../../Button_Credits/ControlDecorator")
+
+[node name="Game" type="Control" parent="StateMachine"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_a16gp")
+
+[node name="MarginContainer" type="MarginContainer" parent="StateMachine/Game"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="StateMachine/Game/MarginContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 20.0
+
+[node name="AspectRatioContainer" type="AspectRatioContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(600, 600)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ColorRect" type="ColorRect" parent="StateMachine/Game/MarginContainer/HBoxContainer/AspectRatioContainer"]
+layout_mode = 2
+
+[connection signal="button_up" from="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Play" to="StateMachine/Menu" method="_on_play_pressed"]
+[connection signal="button_up" from="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Credits" to="StateMachine/Menu" method="_on_credits_pressed"]
+[connection signal="button_up" from="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Quit" to="StateMachine/Menu" method="_on_quit_pressed"]
