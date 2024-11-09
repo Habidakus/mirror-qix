@@ -3,10 +3,13 @@ extends StateMachineState
 @export var fade_in : bool = false
 @export var fade_out : bool = false
 @export var fade_time : float = 1.5
+@export var player_speed : float = 200
 
 var outer_lines : Array = []
+var inner_lines : Array = []
 var play_field : Control = null
 var player_pos : Vector2i
+var player_on_outer_lines : bool = true
 
 func init_state(state_machine: StateMachine) -> void:
 	active_process_mode = self.process_mode
@@ -16,8 +19,8 @@ func init_state(state_machine: StateMachine) -> void:
 
 var player_movement : Vector2 = Vector2.ZERO
 func add_player_direction(dx : float, dy : float) -> void:
-	dx = dx * 50.0
-	dy = dy * 50.0
+	dx = dx * player_speed
+	dy = dy * player_speed
 	if player_movement == Vector2.ZERO:
 		player_movement = Vector2(dx, dy)
 		print("Starting movement")
@@ -60,24 +63,122 @@ func on_line(x : int, y : int, start : Vector2i, end : Vector2i) -> bool:
 	#assert(false, "Odd line %s to %s" % [start, end])
 	return false
 
-func move_if_possible(x : int, y : int) -> void:
+func is_on_outer_line(x : int, y : int) -> bool:
 	for line in outer_lines:
 		if on_line(x, y, line[0], line[1]):
-			player_pos = Vector2(x, y)
-			return
+			return true
+	return false
+
+func is_on_inner_line(x : int, y : int) -> bool:
+	for line in inner_lines:
+		if on_line(x, y, line[0], line[1]):
+			return true
+	return false
+
+func is_direction_on_outer_line(x : int, y : int) -> bool:
+	return is_on_outer_line(player_pos.x + x, player_pos.y + y)
+
+func does_extend_line(x : int, y: int, start : Vector2i, end : Vector2i) -> bool:
+	if start.x == end.x && start.x == x:
+		var dy : int = y - end.y
+		if abs(dy) != 1:
+			return false
+		# ensure we're still going the same direction
+		return ((end.y - start.y) * dy) > 0
+	if start.y == end.y && start.y == y:
+		var dx : int = x - end.x
+		if abs(dx) != 1:
+			return false
+		# ensure we're still going the same direction
+		return ((end.x - start.x) * dx) > 0
+	return false
+
+func move_if_possible(x : int, y : int) -> void:
+	if player_on_outer_lines:
+		if is_on_outer_line(x, y):
+			player_pos = Vector2i(x, y)
+		return
+	# Process building new inner line
+	if is_on_outer_line(x, y):
+		# completed area
+		assert(false, "TODO: Player completed area")
+		return
+	if is_on_inner_line(x, y):
+		# Player ran over own track - die
+		assert(false, "TODO: Player should die now")
+		return
+	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
+		inner_lines.back()[1] = Vector2i(x, y)
+		player_pos = Vector2i(x, y)
+		return
+	inner_lines.append([player_pos, Vector2i(x, y)])
+	player_pos = Vector2i(x, y)
 
 func _process(delta: float) -> void:
 	queue_redraw()
 	rotate_player += 5.0 * delta
-	#print("mouse = %s" % [get_local_mouse_position()])
-	if Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S):
+	process_player_input(delta)
+
+func process_player_input(delta : float) -> void:
+	if player_on_outer_lines == false:
+		# player is burning new path
+		process_inner_line_input(delta)
+		return
+	if process_outer_line_input(delta):
+		return
+	if Input.is_key_pressed(KEY_SPACE):
+		process_inner_path_start()
+
+func start_inner_path(x : int, y : int) -> void:
+	assert(inner_lines.is_empty())
+	var ix : int = player_pos.x + x
+	var iy : int = player_pos.y + y
+	if ix < 0 || iy < 0 || ix >= play_field.size.x || iy >= play_field.size.y:
+		# Player trying to move outside of playing area
+		return
+	if self.is_on_outer_line(ix, iy):
+		# player trying to jump off one line onto another? Shouldn't happen, but stop it
+		print("Shouldn't happen?! Player starting innner line onto outer line")
+		return
+	player_on_outer_lines = false
+	inner_lines.append([player_pos, Vector2i(ix, iy)])
+	player_pos = Vector2i(ix, iy)
+
+func process_inner_path_start() -> void:
+	if (Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S)):
+		start_inner_path(0, 1);
+	elif (Input.is_key_pressed(KEY_UP) || Input.is_key_pressed(KEY_W)):
+		start_inner_path(0, -1);
+	elif (Input.is_key_pressed(KEY_RIGHT) || Input.is_key_pressed(KEY_D)):
+		start_inner_path(1, 0);
+	elif (Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A)):
+		start_inner_path(-1, 0);
+	# else player is just holding down space but no direction - that's ok.
+
+func process_inner_line_input(delta : float) -> void:
+	if (Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S)): # && !is_direction_on_outer_line(0, 1):
 		add_player_direction(0, delta)
-	elif Input.is_key_pressed(KEY_UP) || Input.is_key_pressed(KEY_W):
+	elif (Input.is_key_pressed(KEY_UP) || Input.is_key_pressed(KEY_W)): # && !is_direction_on_outer_line(0, -1):
 		add_player_direction(0, -delta)
-	elif Input.is_key_pressed(KEY_RIGHT) || Input.is_key_pressed(KEY_D):
+	elif (Input.is_key_pressed(KEY_RIGHT) || Input.is_key_pressed(KEY_D)): # && !is_direction_on_outer_line(1, 0):
 		add_player_direction(delta, 0)
-	elif Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A):
+	elif (Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A)): # && !is_direction_on_outer_line(-1, 0):
 		add_player_direction(-delta, 0)
+	
+func process_outer_line_input(delta : float) -> bool:
+	if (Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S)) && is_direction_on_outer_line(0, 1):
+		add_player_direction(0, delta)
+		return true
+	elif (Input.is_key_pressed(KEY_UP) || Input.is_key_pressed(KEY_W)) && is_direction_on_outer_line(0, -1):
+		add_player_direction(0, -delta)
+		return true
+	elif (Input.is_key_pressed(KEY_RIGHT) || Input.is_key_pressed(KEY_D)) && is_direction_on_outer_line(1, 0):
+		add_player_direction(delta, 0)
+		return true
+	elif (Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A)) && is_direction_on_outer_line(-1, 0):
+		add_player_direction(-delta, 0)
+		return true
+	return false
 
 var rotate_player : float = 0
 func _draw() -> void:
@@ -87,6 +188,8 @@ func _draw() -> void:
 	var offset : Vector2 = play_field.global_position - self.global_position
 	for line : Array in outer_lines:
 		draw_line(offset + (line[0] as Vector2), offset + (line[1] as Vector2), Color.WHITE)
+	for line : Array in inner_lines:
+		draw_line(offset + (line[0] as Vector2), offset + (line[1] as Vector2), Color.RED)
 	
 	var player_length : int = 4
 	var rp : int = round(rotate_player) as int
