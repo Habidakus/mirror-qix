@@ -14,7 +14,7 @@ func enter_state() -> void:
 	super.enter_state()
 	if fade_in:
 		self.modulate = Color(Color.WHITE, 0)
-		var tween = get_tree().create_tween()
+		var tween : Tween = get_tree().create_tween()
 		var destination_color : Color = Color(Color.WHITE, 1)
 		tween.tween_property(self, "modulate", destination_color, fade_time)
 

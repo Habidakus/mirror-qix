@@ -10,21 +10,21 @@ var target : Control = null
 var our_state : StateMachineState = null
 
 # Default Settings
-var settings_default = {
+var settings_default : Dictionary = {
 	"scale": Vector2.ONE,
 	"duration_in_seconds": 0.15,
 	"self_modulate": Color.WHITE,
 	"transition_type": Tween.TransitionType.TRANS_QUAD,
 }
 # Hover Settings
-var settings_hover = {
+var settings_hover : Dictionary  = {
 	"scale": Vector2.ONE * 1.1,
 	"duration_in_seconds": 0.15,
 	"self_modulate": Color.WHITE,
 	"transition_type": Tween.TransitionType.TRANS_QUAD,
 }
 # Loading Settings
-var settings_loading = {
+var settings_loading : Dictionary  = {
 	"scale": Vector2.ZERO,
 	"duration_in_seconds": 0.05,
 	"self_modulate": Color(Color.WHITE, 0),
@@ -102,7 +102,7 @@ func invoke_tween_callback() -> void:
 	if tmp:
 		tmp.call()
 
-func add_transition(mode_name : String, settings, seconds : float, callback : Callable ) -> void:
+func add_transition(mode_name : String, settings : Dictionary , seconds : float, callback : Callable ) -> void:
 	#print("Starting transition " + target.name + " to " + mode_name)
 
 	if tween != null && tween.is_running():
@@ -113,7 +113,7 @@ func add_transition(mode_name : String, settings, seconds : float, callback : Ca
 	callback_after_tween_finished = callback
 	
 	# In case we're already out of scene when this gets called
-	var tree = get_tree()
+	var tree : SceneTree = get_tree()
 	if tree != null:
 		tween = tree.create_tween()
 		tween.tween_property(target, "scale", settings["scale"], seconds).set_trans(settings["transition_type"])
@@ -124,7 +124,7 @@ func add_transition(mode_name : String, settings, seconds : float, callback : Ca
 	else:
 		print("add_transition(" + mode_name + ") called when " + name + ".get_tree() returned null")
 
-func get_our_state(t) -> StateMachineState:
+func get_our_state(t : Node) -> StateMachineState:
 	while t != null:
 		if t is StateMachineState:
 			return t as StateMachineState

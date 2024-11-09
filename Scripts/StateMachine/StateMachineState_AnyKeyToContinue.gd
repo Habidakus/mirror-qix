@@ -15,12 +15,13 @@ func _process(delta: float) -> void:
 		if countdown > time_out_in_seconds:
 			leave_state()
 
-func _input(event):
-	handle_event(event)
-func _unhandled_input(event):
+func _input(event : InputEvent) -> void:
 	handle_event(event)
 
-func handle_event(event):
+func _unhandled_input(event : InputEvent) -> void:
+	handle_event(event)
+
+func handle_event(event : InputEvent) -> void:
 	# We process on "released" instead of pressed because otherwise immediately
 	# switching screens could still have the mouse being pressed on some other
 	# screen's button.
@@ -49,7 +50,7 @@ func enter_state() -> void:
 	super.enter_state()
 	if fade_in:
 		self.modulate = Color(Color.WHITE, 0)
-		var tween = get_tree().create_tween()
+		var tween : Tween = get_tree().create_tween()
 		var destination_color : Color = Color(Color.WHITE, 1)
 		tween.tween_property(self, "modulate", destination_color, fade_time)
 	

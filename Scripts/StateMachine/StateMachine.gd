@@ -4,7 +4,7 @@ class_name StateMachine
 
 @export var initial_state : StateMachineState = null
 
-var all_states = []
+var all_states : Array = []
 var current_state : StateMachineState = null
 
 func _ready() -> void:
@@ -25,7 +25,7 @@ func switch_state_internal(state: StateMachineState) -> void:
 		state.enter_state()
 
 func switch_state(next_state_name: String) -> void:
-	for state in all_states:
+	for state : StateMachineState in all_states:
 		if state.name == next_state_name:
 			switch_state_internal(state)
 			return

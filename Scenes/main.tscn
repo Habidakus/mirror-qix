@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_AnyKeyToContinue.gd" id="2_4qlki"]
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_MainMenu.gd" id="3_25r5e"]
 [ext_resource type="Script" path="res://Scripts/Decorators/ControlDecorator.gd" id="4_w0rml"]
-[ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState.gd" id="5_a16gp"]
+[ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_Play.gd" id="5_s7774"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -130,7 +130,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("5_a16gp")
+script = ExtResource("5_s7774")
 
 [node name="MarginContainer" type="MarginContainer" parent="StateMachine/Game"]
 layout_mode = 1
@@ -157,8 +157,9 @@ custom_minimum_size = Vector2(600, 600)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ColorRect" type="ColorRect" parent="StateMachine/Game/MarginContainer/HBoxContainer/AspectRatioContainer"]
+[node name="PlayField" type="ColorRect" parent="StateMachine/Game/MarginContainer/HBoxContainer/AspectRatioContainer"]
 layout_mode = 2
+color = Color(0, 0, 0, 1)
 
 [connection signal="button_up" from="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Play" to="StateMachine/Menu" method="_on_play_pressed"]
 [connection signal="button_up" from="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Credits" to="StateMachine/Menu" method="_on_credits_pressed"]
