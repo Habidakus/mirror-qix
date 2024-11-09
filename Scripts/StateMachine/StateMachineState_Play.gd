@@ -7,6 +7,7 @@ extends StateMachineState
 
 var outer_lines : Array = []
 var inner_lines : Array = []
+var score : int = 0
 var play_field : Control = null
 var player_pos : Vector2i
 var player_on_outer_lines : bool = true
@@ -93,6 +94,51 @@ func does_extend_line(x : int, y: int, start : Vector2i, end : Vector2i) -> bool
 		return ((end.x - start.x) * dx) > 0
 	return false
 
+func measure_area(lines : Array) -> int:
+	# I believe this calucates the area of our polyomino
+	var x : int = 0
+	var y : int = 0
+	var area : int = 0
+	for line : Array in lines:
+		var start : Vector2i = line[0]
+		var end : Vector2i = line[1]
+		if end.x > start.x:
+			var d : int = (end.x - start.x)
+			x += d
+			area += d * y
+		elif end.x < start.x:
+			var d : int = (start.x - end.x)
+			x -= d
+			area -= d * y
+		elif end.y > start.y:
+			var d : int = (end.x - start.x)
+			y += d
+		elif end.y < start.y:
+			var d : int = (start.x - end.x)
+			y -= d
+		else:
+			assert("what? line = %s to %s" % [start, end])
+	if area < 0:
+		return 0 - area
+	else:
+		return area
+
+func complete_loop(x : int, y : int) -> void:
+	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
+		inner_lines.back()[1] = Vector2i(x, y)
+	else:
+		inner_lines.append([player_pos, Vector2i(x, y)])
+	player_pos = Vector2i(x, y)
+	var two_loops : Array = create_both_loops()
+	var loop_1_area : int = measure_area(two_loops[0])
+	var loop_2_area : int = measure_area(two_loops[1])
+	if loop_1_area < loop_2_area:
+		score += loop_1_area
+		outer_lines = two_loops[1]
+	else:
+		score += loop_2_area
+		outer_lines = two_loops[0]
+
 func move_if_possible(x : int, y : int) -> void:
 	if player_on_outer_lines:
 		if is_on_outer_line(x, y):
@@ -101,11 +147,10 @@ func move_if_possible(x : int, y : int) -> void:
 	# Process building new inner line
 	if is_on_outer_line(x, y):
 		# completed area
-		assert(false, "TODO: Player completed area")
+		complete_loop(x, y)
 		return
 	if is_on_inner_line(x, y):
-		# Player ran over own track - die
-		assert(false, "TODO: Player should die now")
+		on_player_death()
 		return
 	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
 		inner_lines.back()[1] = Vector2i(x, y)
@@ -206,6 +251,10 @@ func add_line(start : Vector2i, end : Vector2i) -> void:
 
 func init_game() -> void:
 	play_field = find_child("PlayField") as Control
+	outer_lines = []
+	inner_lines = []
+	score = 0
+	player_on_outer_lines = true
 	var pfs : Vector2i = Vector2i(int(play_field.size.x) - 1, int(play_field.size.y) - 1) 
 	add_line(Vector2i(0,0), Vector2i(pfs.x, 0))
 	add_line(Vector2i(pfs.x, 0), pfs)
@@ -240,7 +289,11 @@ func leave_state(next_state : String) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		get_tree().quit()
-		
+
+func on_player_death() -> void:
+	print("TODO: Implement better death handling")
+	leave_state("Menu")
+
 func _on_quit_pressed() -> void:
 	get_tree().quit()
 
