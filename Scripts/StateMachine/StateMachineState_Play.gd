@@ -144,58 +144,237 @@ func create_both_loops() -> Array:
 			if outer_start_index != -1:
 				break
 	assert(outer_start_index != -1 && outer_end_index != -1)
+	
+	for al in inner_lines:
+		assert(is_path_element_valid(al))
 
 	var loop_1 : Array = inner_lines.duplicate(true)
 	var loop_2 : Array = inner_lines.duplicate(true)
+	
 	if outer_start_index != outer_end_index:
 		loop_1.append([inner_lines.back()[1], outer_lines[outer_end_index][1]])
+		assert(is_path_element_valid(loop_1.back()))
 		var l1 : int = (outer_end_index + 1) % outer_lines.size()
 		while l1 != outer_start_index:
 			loop_1.append(outer_lines[l1])
+			assert(is_path_element_valid(loop_1.back()))
 			l1 = (l1 + 1) % outer_lines.size()
 		loop_1.append([outer_lines[outer_start_index][0], inner_lines.front()[0]])
+		assert(is_path_element_valid(loop_1.back()))
 
 		loop_2.append([inner_lines.back()[1], outer_lines[outer_end_index][0]])
+		assert(is_path_element_valid(loop_2.back()))
 		var l2 : int = (outer_end_index + outer_lines.size() - 1) % outer_lines.size()
 		while l2 != outer_start_index:
 			loop_2.append([outer_lines[l2][1], outer_lines[l2][0]])
+			assert(is_path_element_valid(loop_2.back()))
 			l2 = (l2 + outer_lines.size() - 1) % outer_lines.size()
 		loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
+		assert(is_path_element_valid(loop_2.back()))
 	else:
 		# The player looped back onto the same line they started from, so the
 		# first loop is simple, we just close off the inner path to make it a loop.
 		loop_1.append([inner_lines.back()[1], inner_lines.front()[0]])
+		assert(is_path_element_valid(loop_1.back()))
+
 		# The other loop encorporates the entire outer_lines, except for the slice we took out
 		var inner_end_to_outer_end : Vector2i = (inner_lines.back()[1] - outer_lines[outer_start_index][1]);
 		var inner_start_to_outer_end : Vector2i = (inner_lines.front()[0] - outer_lines[outer_start_index][1]);
 		if inner_end_to_outer_end.length_squared() < inner_start_to_outer_end.length_squared():
 			# The end of the inner loop is closer to the end of the line segment we're attached to
 			loop_2.append([inner_lines.back()[1], outer_lines[outer_start_index][1]])
+			assert(is_path_element_valid(loop_2.back()))
 			var l : int = (outer_start_index + 1) % outer_lines.size()
 			while l != outer_start_index:
 				loop_2.append(outer_lines[l])
+				assert(is_path_element_valid(loop_2.back()))
 				l = (l + 1) % outer_lines.size()
 			loop_2.append([outer_lines[outer_start_index][0], inner_lines.front()[0]])
+			assert(is_path_element_valid(loop_2.back()))
 		else:
 			# The start of the inner loop is closer to the end of the line segment we're attached to so
 			# the end of the inner loop must be closer to the start of the line segment we're attached to
 			
 			loop_2.append([inner_lines.back()[1], outer_lines[outer_start_index][0]])
+			assert(is_path_element_valid(loop_2.back()))
 			var l : int = (outer_start_index + outer_lines.size() - 1) % outer_lines.size()
 			while l != outer_start_index:
 				# TODO: We shouldn't be reversing the outer_lines, we should instead be reversing the inner_lines
 				# That way we will preserve always being the same rotation (clockwise/counterclockwise)
 				loop_2.append([outer_lines[l][1], outer_lines[l][0]])
+				assert(is_path_element_valid(loop_2.back()))
 				l = (l + outer_lines.size() - 1) % outer_lines.size()
 			loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
+			assert(is_path_element_valid(loop_2.back()))
 			
 	return [loop_1, loop_2]
 
 func path_to_rect(path : Array) -> Rect2i:
 	return Rect2i(Vector2i(min(path[0][0].x, path[1][1].x), min(path[0][0].y, path[1][1].y)), Vector2i(abs(path[0][0].x - path[1][1].x), abs(path[0][0].y - path[1][1].y)))
+func rect_to_path(rect : Rect2i) -> Array:
+	return [
+		[rect.position, rect.position + Vector2i(rect.size.x, 0)],
+		[rect.position + Vector2i(rect.size.x, 0), rect.end],
+		[rect.end, rect.position + Vector2i(0, rect.size.y)],
+		[rect.position + Vector2i(0, rect.size.y), rect.position]
+	]
+
+func get_signed_area_of_path(path : Array) -> float:
+	var total : int = 0
+	for i in range(0, path.size()):
+		#var next : int = (i + 1) % path.size()
+		var v : int = path[i][0].x * path[i][1].y - path[i][1].x * path[i][0].y
+		total += v
+	return total / 2.0
+
+func is_path_element_valid(path_el : Array) -> bool:
+	var start : Vector2i = path_el[0]
+	var end : Vector2i = path_el[1]
+	if start == end:
+		return false
+	if start.x != end.x && start.y != end.y:
+		return false
+	return true
+	
+func break_out_square(path : Array) -> Array: # square, then remaining path
+	#var clockwise : bool = get_signed_area_of_path(path) > 0
+	for i in range(0, path.size()):
+		assert(is_path_element_valid(path[i]))
+		var prev : int = (i + path.size() - 1) % path.size()
+		assert(path[prev][1] == path[i][0])
+		var next : int = (i + 1) % path.size()
+		if path[i][0].x == path[i][1].x:
+			var delta_x_prev : int = path[prev][0].x - path[prev][1].x
+			var delta_x_next : int = path[next][1].x - path[next][0].x
+			if delta_x_prev * delta_x_next > 0:
+				# They're both aimed in the same direction
+				var rect : Rect2i
+				var miny : int = min(path[i][0].y, path[i][1].y)
+				var height : int = abs(path[i][1].y - path[i][0].y)
+				var shorter_path : Array = []
+				if abs(delta_x_prev) < abs(delta_x_next):
+					# previous is the shorter arm
+					var minx : int = min(path[prev][0].x, path[prev][1].x)
+					var width : int = abs(delta_x_prev)
+					rect = Rect2i(Vector2i(minx, miny), Vector2i(width, height))
+					var prevprev : int = (i + path.size() - 2) % path.size()
+					var new_loc_on_next : Vector2i = Vector2i(path[prev][0].x, path[next][0].y)
+					for j in range(0, path.size()):
+						if j == i:
+							continue
+						elif j == prev:
+							continue
+						elif j == prevprev:
+							assert(new_loc_on_next != path[j][0])
+							shorter_path.append([path[j][0], new_loc_on_next])
+							assert(is_path_element_valid(shorter_path.back()))
+						elif j == next:
+							assert(new_loc_on_next != path[j][1])
+							shorter_path.append([new_loc_on_next, path[j][1]])
+							assert(is_path_element_valid(shorter_path.back()))
+						else:
+							shorter_path.append(path[j])
+							assert(is_path_element_valid(shorter_path.back()))
+				else:
+					# next is the shorter arm
+					var minx : int = min(path[next][0].x, path[next][1].x)
+					var width : int = abs(delta_x_next)
+					rect = Rect2i(Vector2i(minx, miny), Vector2i(width, height))
+					var nextnext : int = (i + 2) % path.size()
+					var new_loc_on_prev : Vector2i = Vector2i(path[next][1].x, path[prev][0].y)
+					for j in range(0, path.size()):
+						if j == i:
+							continue
+						elif j == next:
+							continue
+						elif j == nextnext:
+							assert(new_loc_on_prev != path[j][1])
+							shorter_path.append([new_loc_on_prev, path[j][1]])
+							assert(is_path_element_valid(shorter_path.back()))
+						elif j == prev:
+							assert(new_loc_on_prev != path[j][0])
+							shorter_path.append([path[j][0], new_loc_on_prev])
+							assert(is_path_element_valid(shorter_path.back()))
+						else:
+							shorter_path.append(path[j])
+							assert(is_path_element_valid(shorter_path.back()))
+				# There's probably a faster way to detect this with dot products and knowing if the
+				# polygon is clockwise or counterclockwise... but for now make sure the rect and
+				# new path's area equals the path of the old area... otherwise we're adding space
+				# rather than dividing.
+				var area_of_two_parts = rect.get_area() + measure_area(shorter_path)
+				if area_of_two_parts == measure_area(path):
+					return [rect_to_path(rect), shorter_path]
+		else: # Y Aligned
+			var delta_y_prev : int = path[prev][0].y - path[prev][1].y
+			var delta_y_next : int = path[next][1].y - path[next][0].y
+			if delta_y_prev * delta_y_next > 0:
+				# They're both aimed in the same direction
+				var rect : Rect2i
+				var minx : int = min(path[i][0].x, path[i][1].x)
+				var width : int = abs(path[i][1].x - path[i][0].x)
+				var shorter_path : Array = []
+				if abs(delta_y_prev) < abs(delta_y_next):
+					# previous is the shorter arm
+					var miny : int = min(path[prev][0].y, path[prev][1].y)
+					var height : int = abs(delta_y_prev)
+					rect = Rect2i(Vector2i(minx, miny), Vector2i(width, height))
+					var prevprev : int = (i + path.size() - 2) % path.size()
+					var new_loc_on_next : Vector2i = Vector2i(path[next][0].x, path[prev][0].y)
+					for j in range(0, path.size()):
+						if j == i:
+							continue
+						elif j == prev:
+							continue
+						elif j == prevprev:
+							assert(new_loc_on_next != path[j][0])
+							shorter_path.append([path[j][0], new_loc_on_next])
+							assert(is_path_element_valid(shorter_path.back()))
+						elif j == next:
+							assert(new_loc_on_next != path[j][1])
+							shorter_path.append([new_loc_on_next, path[j][1]])
+							assert(is_path_element_valid(shorter_path.back()))
+						else:
+							shorter_path.append(path[j])
+							assert(is_path_element_valid(shorter_path.back()))
+				else:
+					# next is the shorter arm
+					var miny : int = min(path[next][0].y, path[next][1].y)
+					var height : int = abs(delta_y_next)
+					rect = Rect2i(Vector2i(minx, miny), Vector2i(width, height))
+					var nextnext : int = (i + 2) % path.size()
+					var new_loc_on_prev : Vector2i = Vector2i(path[prev][0].x, path[next][1].y)
+					for j in range(0, path.size()):
+						if j == i:
+							continue
+						elif j == next:
+							continue
+						elif j == nextnext:
+							assert(new_loc_on_prev != path[j][1])
+							shorter_path.append([new_loc_on_prev, path[j][1]])
+							assert(is_path_element_valid(shorter_path.back()))
+						elif j == prev:
+							assert(new_loc_on_prev != path[j][0])
+							shorter_path.append([path[j][0], new_loc_on_prev])
+							assert(is_path_element_valid(shorter_path.back()))
+						else:
+							shorter_path.append(path[j])
+							assert(is_path_element_valid(shorter_path.back()))
+				# There's probably a faster way to detect this with dot products and knowing if the
+				# polygon is clockwise or counterclockwise... but for now make sure the rect and
+				# new path's area equals the path of the old area... otherwise we're adding space
+				# rather than dividing.
+				var area_of_two_parts = rect.get_area() + measure_area(shorter_path)
+				if area_of_two_parts == measure_area(path):
+					return [rect_to_path(rect), shorter_path]
+	print(str(path))
+	assert(false, "we should always find something")
+	return []
 
 # TODO: Needs to be re-written
-func break_out_square(path : Array) -> Array: # square, then remaining path
+func break_out_square_old(path : Array) -> Array: # square, then remaining path
+	var signed_area = get_signed_area_of_path(path)
+	print("signed area = %s" % [signed_area])
 	var square : Array = []
 	var remaining : Array = []
 	for i in range(0, path.size()):
