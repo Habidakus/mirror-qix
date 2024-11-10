@@ -192,8 +192,9 @@ func create_both_loops() -> Array:
 	return [loop_1, loop_2]
 
 func path_to_rect(path : Array) -> Rect2i:
-	return Rect2i(path[0][0], path[1][1])
+	return Rect2i(Vector2i(min(path[0][0].x, path[1][1].x), min(path[0][0].y, path[1][1].y)), Vector2i(abs(path[0][0].x - path[1][1].x), abs(path[0][0].y - path[1][1].y)))
 
+# TODO: Needs to be re-written
 func break_out_square(path : Array) -> Array: # square, then remaining path
 	var square : Array = []
 	var remaining : Array = []
@@ -278,8 +279,8 @@ func cleanup_path(path : Array) -> Array:
 			for j in range(0, path.size()):
 				if i == j:
 					continue
-				if i == n:
-					retVal.append([path[i][0], path[n][1]])
+				if j == n:
+					retVal.append([path[j][0], path[n][1]])
 				else:
 					retVal.append(path[j])
 			return retVal
@@ -291,6 +292,7 @@ func score_loop(score_inc : int, path : Array) -> void:
 		var p : Array = break_out_square(path)
 		path = p[1]
 		completed_rects.append(path_to_rect(p[0]))
+	assert(path.size() == 4)
 	completed_rects.append(path_to_rect(path))
 
 func complete_loop(x : int, y : int) -> void:
@@ -416,8 +418,12 @@ var rotate_player : float = 0
 func _draw() -> void:
 	if play_field == null:
 		return
-
+		
 	var offset : Vector2 = play_field.global_position - self.global_position
+
+	for rect : Rect2i in completed_rects:
+		draw_rect(Rect2(rect.position as Vector2 + offset, rect.size), Color.YELLOW)
+
 	for line : Array in outer_lines:
 		draw_line(offset + (line[0] as Vector2), offset + (line[1] as Vector2), Color.WHITE)
 	for line : Array in inner_lines:
