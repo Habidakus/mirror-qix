@@ -7,6 +7,7 @@ extends StateMachineState
 
 var outer_lines : Array = []
 var inner_lines : Array = []
+var completed_rects : Array = []
 var score : int = 0
 var play_field : Control = null
 var score_label : Label = null
@@ -182,11 +183,115 @@ func create_both_loops() -> Array:
 			loop_2.append([inner_lines.back()[1], outer_lines[outer_start_index][0]])
 			var l : int = (outer_start_index + outer_lines.size() - 1) % outer_lines.size()
 			while l != outer_start_index:
+				# TODO: We shouldn't be reversing the outer_lines, we should instead be reversing the inner_lines
+				# That way we will preserve always being the same rotation (clockwise/counterclockwise)
 				loop_2.append([outer_lines[l][1], outer_lines[l][0]])
 				l = (l + outer_lines.size() - 1) % outer_lines.size()
 			loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
 			
 	return [loop_1, loop_2]
+
+func path_to_rect(path : Array) -> Rect2i:
+	return Rect2i(path[0][0], path[1][1])
+
+func break_out_square(path : Array) -> Array: # square, then remaining path
+	var square : Array = []
+	var remaining : Array = []
+	for i in range(0, path.size()):
+		var q : int = (i + path.size() - 1) % path.size()
+		var n : int = (i + 1) % path.size()
+		var m : int = (i + 2) % path.size()
+		var c1 : Vector2i = path[i][0]
+		var f1 : Vector2i = path[i][1]
+		var c2 : Vector2i = path[n][1]
+		var f2 : Vector2i
+		if c1.x == f1.x:
+			f2.x = c2.x
+			f2.y = c1.y
+		else:
+			f2.x = c1.x
+			f2.y = c2.y
+		if on_line(f2.x, f2.y, path[m][0], path[m][1]):
+			square = [[c1, f1], [f1, c2], [c2, f2], [f2, c1]]
+			for j in range(0, path.size()):
+				if j == i:
+					# delete this
+					continue
+				if j == n:
+					# delete this
+					continue
+				if j == q:
+					if path[q][0] != f2:
+						remaining.append([path[q][0], f2])
+					continue
+				if j == m:
+					if f2 != path[m][1]:
+						remaining.append([f2,path[m][1]])
+					continue
+				remaining.append(path[j])
+			return [square, cleanup_path(remaining)]
+		# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+		# all of this is dubious? but maybe works?
+		c1 = path[n][1]
+		f1 = path[n][0]
+		c2 = path[i][0]
+		if c1.x == f1.x:
+			f2.x = c2.x
+			f2.y = c1.y
+		else:
+			f2.x = c1.x
+			f2.y = c2.y
+		if on_line(f2.x, f2.y, path[q][0], path[q][1]):
+			square = [[c1, f1], [f1, c2], [c2, f2], [f2, c1]]
+			for j in range(0, path.size()):
+				if j == i:
+					# delete this
+					continue
+				if j == n:
+					# delete this
+					continue
+				if j == q:
+					if path[q][0] != f2:
+						remaining.append([path[q][0], f2])
+					continue
+				if j == m:
+					if f2 != path[m][1]:
+						remaining.append([f2,path[m][1]])
+					continue
+				remaining.append(path[j])
+			return [square, cleanup_path(remaining)]
+		# END DUBIOUS
+		# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	if square.is_empty():
+		print("Found no square in path")
+		print(str(path))
+		assert(false, "Found no square in path")
+	return [square, cleanup_path(remaining)]
+
+func cleanup_path(path : Array) -> Array:
+	for i in range(0, path.size()):
+		var n : int = (i + 1) % path.size()
+		var same_x : bool = (path[i][0].x == path[i][1].x) && (path[i][1].x == path[n][1].x)
+		var same_y : bool = (path[i][0].y == path[i][1].y) && (path[i][1].y == path[n][1].y)
+		if same_x || same_y:
+			var retVal : Array = []
+			for j in range(0, path.size()):
+				if i == j:
+					continue
+				if i == n:
+					retVal.append([path[i][0], path[n][1]])
+				else:
+					retVal.append(path[j])
+			return retVal
+	return path
+
+func score_loop(score_inc : int, path : Array) -> void:
+	score += score_inc
+	while path.size() > 4:
+		var p : Array = break_out_square(path)
+		path = p[1]
+		completed_rects.append(path_to_rect(p[0]))
+	completed_rects.append(path_to_rect(path))
 
 func complete_loop(x : int, y : int) -> void:
 	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
@@ -199,10 +304,10 @@ func complete_loop(x : int, y : int) -> void:
 	var loop_2_area : int = measure_area(two_loops[1])
 	print("%s + %s = %s" % [loop_1_area, loop_2_area, loop_1_area + loop_2_area])
 	if loop_1_area < loop_2_area:
-		score += loop_1_area
+		score_loop(loop_1_area, two_loops[0])
 		outer_lines = two_loops[1]
 	else:
-		score += loop_2_area
+		score_loop(loop_2_area, two_loops[1])
 		outer_lines = two_loops[0]
 	score_label.text = str(round(score * 1000 / ((play_field.size.x - 1) * (play_field.size.y - 1))) / 10)
 	inner_lines = []
@@ -252,6 +357,8 @@ func start_inner_path(x : int, y : int) -> void:
 		return
 
 	# TODO: Don't let player draw outside remaining area
+	# If we always have the outer_path going in the same direction (say clockwise) then
+	# we can use the dot product to make sure the player isn't leaving the path.
 
 	if self.is_on_outer_line(ix, iy):
 		# player trying to jump off one line onto another? Shouldn't happen, but stop it
@@ -334,6 +441,7 @@ func init_game() -> void:
 	score_label = find_child("Score") as Label
 	outer_lines = []
 	inner_lines = []
+	completed_rects = []
 	score = 0
 	player_on_outer_lines = true
 	var pfs : Vector2i = Vector2i(int(play_field.size.x) - 1, int(play_field.size.y) - 1) 

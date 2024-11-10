@@ -32,6 +32,22 @@ func leave_state(next_state : String) -> void:
 	else:
 		our_state_machine.switch_state(next_state)
 
+#func _draw() -> void:
+#	var l : Array = [
+#		[Vector2(0, 300), Vector2(50, 300)],
+#		[Vector2(50, 300), Vector2(50, 128)],
+#		[Vector2(50, 128), Vector2(140, 128)],
+#		[Vector2(140, 128), Vector2(140, 238)],
+#		[Vector2(140, 238), Vector2(120, 238)],
+#		[Vector2(120, 238), Vector2(120, 372)],
+#		[Vector2(120, 372), Vector2(70, 372)],
+#		[Vector2(70, 372), Vector2(70, 327)],
+#		[Vector2(70, 327), Vector2(0, 327)],
+#		[Vector2(0, 327), Vector2(0, 300)]
+#	]
+#	for line in l:
+#		draw_line(line[0] + Vector2(20,20), line[1] + Vector2(20,20), Color.RED)
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		get_tree().quit()
