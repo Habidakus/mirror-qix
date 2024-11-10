@@ -9,6 +9,7 @@ var outer_lines : Array = []
 var inner_lines : Array = []
 var score : int = 0
 var play_field : Control = null
+var score_label : Label = null
 var player_pos : Vector2i
 var player_on_outer_lines : bool = true
 
@@ -106,22 +107,86 @@ func measure_area(lines : Array) -> int:
 			var d : int = (end.x - start.x)
 			x += d
 			area += d * y
+			#print("East line %s to %s: d = %d, x = %d, y = %d, area = %d" % [start, end, d, x, y, area])
 		elif end.x < start.x:
 			var d : int = (start.x - end.x)
 			x -= d
 			area -= d * y
+			#print("West line %s to %s: d = %d, x = %d, y = %d, area = %d" % [start, end, d, x, y, area])
 		elif end.y > start.y:
-			var d : int = (end.x - start.x)
+			var d : int = (end.y - start.y)
 			y += d
+			#print("South line %s to %s: d = %d, x = %d, y = %d, area = %d" % [start, end, d, x, y, area])
 		elif end.y < start.y:
-			var d : int = (start.x - end.x)
+			var d : int = (start.y - end.y)
 			y -= d
+			#print("North line %s to %s: d = %d, x = %d, y = %d, area = %d" % [start, end, d, x, y, area])
 		else:
 			assert("what? line = %s to %s" % [start, end])
 	if area < 0:
-		return 0 - area
+		area = 0 - area
+	#print("Area = %s" % [area])
+	return area
+
+func create_both_loops() -> Array:
+	var start_point : Vector2i = inner_lines.front()[0]
+	var end_point : Vector2i = inner_lines.back()[1]
+	var outer_start_index : int = -1
+	var outer_end_index : int = -1
+	for i in range(0, outer_lines.size()):
+		if self.on_line(start_point.x, start_point.y, outer_lines[i][0], outer_lines[i][1]):
+			outer_start_index = i
+			if outer_end_index != -1:
+				break
+		if self.on_line(end_point.x, end_point.y, outer_lines[i][0], outer_lines[i][1]):
+			outer_end_index = i
+			if outer_start_index != -1:
+				break
+	assert(outer_start_index != -1 && outer_end_index != -1)
+
+	var loop_1 : Array = inner_lines.duplicate(true)
+	var loop_2 : Array = inner_lines.duplicate(true)
+	if outer_start_index != outer_end_index:
+		loop_1.append([inner_lines.back()[1], outer_lines[outer_end_index][1]])
+		var l1 : int = (outer_end_index + 1) % outer_lines.size()
+		while l1 != outer_start_index:
+			loop_1.append(outer_lines[l1])
+			l1 = (l1 + 1) % outer_lines.size()
+		loop_1.append([outer_lines[outer_start_index][0], inner_lines.front()[0]])
+
+		loop_2.append([inner_lines.back()[1], outer_lines[outer_end_index][0]])
+		var l2 : int = (outer_end_index + outer_lines.size() - 1) % outer_lines.size()
+		while l2 != outer_start_index:
+			loop_2.append([outer_lines[l2][1], outer_lines[l2][0]])
+			l2 = (l2 + outer_lines.size() - 1) % outer_lines.size()
+		loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
 	else:
-		return area
+		# The player looped back onto the same line they started from, so the
+		# first loop is simple, we just close off the inner path to make it a loop.
+		loop_1.append([inner_lines.back()[1], inner_lines.front()[0]])
+		# The other loop encorporates the entire outer_lines, except for the slice we took out
+		var inner_end_to_outer_end : Vector2i = (inner_lines.back()[1] - outer_lines[outer_start_index][1]);
+		var inner_start_to_outer_end : Vector2i = (inner_lines.front()[0] - outer_lines[outer_start_index][1]);
+		if inner_end_to_outer_end.length_squared() < inner_start_to_outer_end.length_squared():
+			# The end of the inner loop is closer to the end of the line segment we're attached to
+			loop_2.append([inner_lines.back()[1], outer_lines[outer_start_index][1]])
+			var l : int = (outer_start_index + 1) % outer_lines.size()
+			while l != outer_start_index:
+				loop_2.append(outer_lines[l])
+				l = (l + 1) % outer_lines.size()
+			loop_2.append([outer_lines[outer_start_index][0], inner_lines.front()[0]])
+		else:
+			# The start of the inner loop is closer to the end of the line segment we're attached to so
+			# the end of the inner loop must be closer to the start of the line segment we're attached to
+			
+			loop_2.append([inner_lines.back()[1], outer_lines[outer_start_index][0]])
+			var l : int = (outer_start_index + outer_lines.size() - 1) % outer_lines.size()
+			while l != outer_start_index:
+				loop_2.append([outer_lines[l][1], outer_lines[l][0]])
+				l = (l + outer_lines.size() - 1) % outer_lines.size()
+			loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
+			
+	return [loop_1, loop_2]
 
 func complete_loop(x : int, y : int) -> void:
 	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
@@ -132,12 +197,16 @@ func complete_loop(x : int, y : int) -> void:
 	var two_loops : Array = create_both_loops()
 	var loop_1_area : int = measure_area(two_loops[0])
 	var loop_2_area : int = measure_area(two_loops[1])
+	print("%s + %s = %s" % [loop_1_area, loop_2_area, loop_1_area + loop_2_area])
 	if loop_1_area < loop_2_area:
 		score += loop_1_area
 		outer_lines = two_loops[1]
 	else:
 		score += loop_2_area
 		outer_lines = two_loops[0]
+	score_label.text = str(round(score * 1000 / ((play_field.size.x - 1) * (play_field.size.y - 1))) / 10)
+	inner_lines = []
+	player_on_outer_lines = true
 
 func move_if_possible(x : int, y : int) -> void:
 	if player_on_outer_lines:
@@ -181,6 +250,9 @@ func start_inner_path(x : int, y : int) -> void:
 	if ix < 0 || iy < 0 || ix >= play_field.size.x || iy >= play_field.size.y:
 		# Player trying to move outside of playing area
 		return
+
+	# TODO: Don't let player draw outside remaining area
+
 	if self.is_on_outer_line(ix, iy):
 		# player trying to jump off one line onto another? Shouldn't happen, but stop it
 		print("Shouldn't happen?! Player starting innner line onto outer line")
@@ -225,6 +297,14 @@ func process_outer_line_input(delta : float) -> bool:
 		return true
 	return false
 
+#func fancy_draw_line(start : Vector2, end : Vector2, color : Color) -> void:
+#	var delta : Vector2 = end - start
+#	var inc : float = float(1) / 10
+#	for j in range(0, 10):
+#		var i = float(j)/10
+#		var dcolor = lerp(Color.GREEN, color, i)
+#		draw_line(start + i * delta, start + (i + inc) * delta, dcolor)
+
 var rotate_player : float = 0
 func _draw() -> void:
 	if play_field == null:
@@ -251,6 +331,7 @@ func add_line(start : Vector2i, end : Vector2i) -> void:
 
 func init_game() -> void:
 	play_field = find_child("PlayField") as Control
+	score_label = find_child("Score") as Label
 	outer_lines = []
 	inner_lines = []
 	score = 0
