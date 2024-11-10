@@ -3,3 +3,4 @@
 - faster enemy
 - swarm enemy vs bounce enemy
 - mirror mode (swap sides of build, but keep player on the same y position
+- make sure we don't create a loop with an overlap (figure eight)

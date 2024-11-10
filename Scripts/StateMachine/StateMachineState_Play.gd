@@ -129,6 +129,12 @@ func measure_area(lines : Array) -> int:
 	#print("Area = %s" % [area])
 	return area
 
+func hack_reverse_loop(loop : Array) -> Array:
+	var retVal : Array = []
+	for line : Array in loop:
+		retVal.append([line[1], line[0]])
+	return retVal
+
 func create_both_loops() -> Array:
 	var start_point : Vector2i = inner_lines.front()[0]
 	var end_point : Vector2i = inner_lines.back()[1]
@@ -161,16 +167,21 @@ func create_both_loops() -> Array:
 			l1 = (l1 + 1) % outer_lines.size()
 		loop_1.append([outer_lines[outer_start_index][0], inner_lines.front()[0]])
 		assert(is_path_element_valid(loop_1.back()))
+		assert(is_path_valid(loop_1))
 
 		loop_2.append([inner_lines.back()[1], outer_lines[outer_end_index][0]])
 		assert(is_path_element_valid(loop_2.back()))
 		var l2 : int = (outer_end_index + outer_lines.size() - 1) % outer_lines.size()
 		while l2 != outer_start_index:
+			# TODO: We shouldn't be reversing the outer_lines, we should instead be reversing the inner_lines
+			# That way we will preserve always being the same rotation (clockwise/counterclockwise)
 			loop_2.append([outer_lines[l2][1], outer_lines[l2][0]])
 			assert(is_path_element_valid(loop_2.back()))
 			l2 = (l2 + outer_lines.size() - 1) % outer_lines.size()
 		loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
 		assert(is_path_element_valid(loop_2.back()))
+		loop_2 = hack_reverse_loop(loop_2)
+		assert(is_path_valid(loop_2))
 	else:
 		# The player looped back onto the same line they started from, so the
 		# first loop is simple, we just close off the inner path to make it a loop.
@@ -191,6 +202,7 @@ func create_both_loops() -> Array:
 				l = (l + 1) % outer_lines.size()
 			loop_2.append([outer_lines[outer_start_index][0], inner_lines.front()[0]])
 			assert(is_path_element_valid(loop_2.back()))
+			assert(is_path_valid(loop_1))
 		else:
 			# The start of the inner loop is closer to the end of the line segment we're attached to so
 			# the end of the inner loop must be closer to the start of the line segment we're attached to
@@ -206,6 +218,8 @@ func create_both_loops() -> Array:
 				l = (l + outer_lines.size() - 1) % outer_lines.size()
 			loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
 			assert(is_path_element_valid(loop_2.back()))
+			loop_2 = hack_reverse_loop(loop_2)
+			assert(is_path_valid(loop_2))
 			
 	return [loop_1, loop_2]
 
@@ -231,13 +245,30 @@ func is_path_element_valid(path_el : Array) -> bool:
 	var start : Vector2i = path_el[0]
 	var end : Vector2i = path_el[1]
 	if start == end:
+		print("Path Element Invalid: Start & End are same point %s" % [start])
 		return false
 	if start.x != end.x && start.y != end.y:
+		print("Path Element Invalid: Start & End don't share either X or Y coordinates: %s %s" % [start, end])
+		return false
+	return true
+
+func is_path_valid(path : Array) -> bool:
+	var area : int = measure_area(path)
+	if area == 0:
+		print("Path invalid: No area")
+		return false
+	var signed_area : float = get_signed_area_of_path(path)
+	if area != abs(signed_area):
+		print("Path invalid: Area(%s) and signed Area(%s) don't agree on size" % [area, abs(signed_area)])
+		return false
+	if signed_area < 0:
+		print("Path Invalid: Path is counter-clockwise")
 		return false
 	return true
 	
 func break_out_square(path : Array) -> Array: # square, then remaining path
 	#var clockwise : bool = get_signed_area_of_path(path) > 0
+	assert(is_path_valid(path))
 	for i in range(0, path.size()):
 		assert(is_path_element_valid(path[i]))
 		var prev : int = (i + path.size() - 1) % path.size()
@@ -304,6 +335,7 @@ func break_out_square(path : Array) -> Array: # square, then remaining path
 				# rather than dividing.
 				var area_of_two_parts = rect.get_area() + measure_area(shorter_path)
 				if area_of_two_parts == measure_area(path):
+					assert(is_path_valid(shorter_path))
 					return [rect_to_path(rect), shorter_path]
 		else: # Y Aligned
 			var delta_y_prev : int = path[prev][0].y - path[prev][1].y
@@ -366,6 +398,7 @@ func break_out_square(path : Array) -> Array: # square, then remaining path
 				# rather than dividing.
 				var area_of_two_parts = rect.get_area() + measure_area(shorter_path)
 				if area_of_two_parts == measure_area(path):
+					assert(is_path_valid(shorter_path))
 					return [rect_to_path(rect), shorter_path]
 	print(str(path))
 	assert(false, "we should always find something")
