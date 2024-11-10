@@ -131,8 +131,9 @@ func measure_area(lines : Array) -> int:
 
 func hack_reverse_loop(loop : Array) -> Array:
 	var retVal : Array = []
-	for line : Array in loop:
-		retVal.append([line[1], line[0]])
+	for i in range(0, loop.size()):
+		var n : int = loop.size() - (i + 1)
+		retVal.append([loop[n][1], loop[n][0]])
 	return retVal
 
 func create_both_loops() -> Array:
@@ -253,19 +254,95 @@ func is_path_element_valid(path_el : Array) -> bool:
 	return true
 
 func is_path_valid(path : Array) -> bool:
+	var retVal : bool = true
 	var area : int = measure_area(path)
 	if area == 0:
 		print("Path invalid: No area")
-		return false
+		retVal = false
 	var signed_area : float = get_signed_area_of_path(path)
 	if area != abs(signed_area):
-		print("Path invalid: Area(%s) and signed Area(%s) don't agree on size" % [area, abs(signed_area)])
-		return false
+		print("Path invalid: Area(%s) and signed Area(%s) don't agree on size" % [area, signed_area])
+		retVal = false
 	if signed_area < 0:
 		print("Path Invalid: Path is counter-clockwise")
-		return false
-	return true
+		retVal = false
+	for i in range(0, path.size()):
+		var n : int = (i + 1) % path.size()
+		if path[i][1] != path[n][0]:
+			print("Path invalid: elements #%d=%s and #%d=%s are not connected" % [i, path[i], n, path[n]])
+			retVal = false
+		if are_path_elements_same_axis(path[i], path[n]):
+			print("Path invalid: neighbor elements %s and %s are on the same axis" % [path[i], path[n]])
+			retVal = false
+		for j in range(i + 1, path.size()):
+			if do_path_elements_overlap(path[i], path[j]):
+				print("Path invalid: two elements overlap: %s and %s" % [path[i], path[n]])
+				retVal = false
+	return retVal
+
+func do_any_path_elements_overlap(path : Array) -> bool:
+	for i in range(0, path.size()):
+		for j in range(i + 1, path.size()):
+			if do_path_elements_overlap(path[i], path[j]):
+				return true
+	return false	
+
+func do_ranges_overlap(range_a : Array, range_b : Array) -> bool:
+	if abs(range_a[0] - range_a[1]) < abs(range_b[0] - range_b[1]):
+		return is_point_in_range(range_a[0], range_b, false) || is_point_in_range(range_a[1], range_b, false)
+	else:
+		return is_point_in_range(range_b[0], range_a, false) || is_point_in_range(range_b[1], range_a, false)
 	
+func is_point_in_range(point : int, r : Array, excludeRangeEndPoints : bool) -> bool:
+	if excludeRangeEndPoints:
+		if r[0] < r[1]:
+			return (r[0] + 1) <= point && point <= (r[1] - 1);
+		else:
+			return (r[1] + 1) <= point && point <= (r[0] - 1);
+	else:
+		if r[0] < r[1]:
+			return r[0] <= point && point <= r[1];
+		else:
+			return r[1] <= point && point <= r[0];
+
+func do_path_elements_overlap(path_el_a : Array, path_el_b : Array) -> bool:
+	var is_a_on_x : bool = is_path_element_on_x_axis(path_el_a)
+	var is_b_on_x : bool = is_path_element_on_x_axis(path_el_b)
+	if is_a_on_x == is_b_on_x:
+		if is_a_on_x: # both on x axis
+			if path_el_a[0].x != path_el_b[0].x:
+				return false
+			if do_ranges_overlap([path_el_a[0].y, path_el_a[1].y], [path_el_b[0].y, path_el_b[1].y]):
+				return true
+			return false
+		else: # both on y axis
+			if path_el_a[0].y != path_el_b[0].y:
+				return false
+			if do_ranges_overlap([path_el_a[0].x, path_el_a[1].x], [path_el_b[0].x, path_el_b[1].x]):
+				return true
+			return false
+	else:
+		if is_a_on_x: # a is x-axis, b is y-axis
+			var a_is_within_b : bool = is_point_in_range(path_el_a[0].x, [path_el_b[0].x, path_el_b[1].x], true)
+			var b_is_within_a : bool = is_point_in_range(path_el_b[0].y, [path_el_a[0].y, path_el_a[1].y], true)
+			if a_is_within_b && b_is_within_a:
+				return true
+			return false
+		else: # a is on y-axis, b is on x-axis
+			var a_is_within_b : bool = is_point_in_range(path_el_a[0].y, [path_el_b[0].y, path_el_b[1].y], true)
+			var b_is_within_a : bool = is_point_in_range(path_el_b[0].x, [path_el_a[0].x, path_el_a[1].x], true)
+			if a_is_within_b && b_is_within_a:
+				return true
+			return false
+
+func are_path_elements_same_axis(path_el_a : Array, path_el_b : Array) -> bool:
+	var is_a_on_x : bool = is_path_element_on_x_axis(path_el_a)
+	var is_b_on_x : bool = is_path_element_on_x_axis(path_el_b)
+	return is_a_on_x == is_b_on_x
+
+func is_path_element_on_x_axis(path_el : Array) -> bool:
+	return path_el[0].x == path_el[1].x
+
 func break_out_square(path : Array) -> Array: # square, then remaining path
 	#var clockwise : bool = get_signed_area_of_path(path) > 0
 	assert(is_path_valid(path))
@@ -329,14 +406,15 @@ func break_out_square(path : Array) -> Array: # square, then remaining path
 						else:
 							shorter_path.append(path[j])
 							assert(is_path_element_valid(shorter_path.back()))
-				# There's probably a faster way to detect this with dot products and knowing if the
-				# polygon is clockwise or counterclockwise... but for now make sure the rect and
-				# new path's area equals the path of the old area... otherwise we're adding space
-				# rather than dividing.
-				var area_of_two_parts = rect.get_area() + measure_area(shorter_path)
-				if area_of_two_parts == measure_area(path):
-					assert(is_path_valid(shorter_path))
-					return [rect_to_path(rect), shorter_path]
+				if !do_any_path_elements_overlap(shorter_path):
+					# There's probably a faster way to detect this with dot products and knowing if the
+					# polygon is clockwise or counterclockwise... but for now make sure the rect and
+					# new path's area equals the path of the old area... otherwise we're adding space
+					# rather than dividing.
+					var area_of_two_parts = rect.get_area() + measure_area(shorter_path)
+					if area_of_two_parts == measure_area(path):
+						assert(is_path_valid(shorter_path))
+						return [rect_to_path(rect), shorter_path]
 		else: # Y Aligned
 			var delta_y_prev : int = path[prev][0].y - path[prev][1].y
 			var delta_y_next : int = path[next][1].y - path[next][0].y
@@ -392,14 +470,15 @@ func break_out_square(path : Array) -> Array: # square, then remaining path
 						else:
 							shorter_path.append(path[j])
 							assert(is_path_element_valid(shorter_path.back()))
-				# There's probably a faster way to detect this with dot products and knowing if the
-				# polygon is clockwise or counterclockwise... but for now make sure the rect and
-				# new path's area equals the path of the old area... otherwise we're adding space
-				# rather than dividing.
-				var area_of_two_parts = rect.get_area() + measure_area(shorter_path)
-				if area_of_two_parts == measure_area(path):
-					assert(is_path_valid(shorter_path))
-					return [rect_to_path(rect), shorter_path]
+				if !do_any_path_elements_overlap(shorter_path):
+					# There's probably a faster way to detect this with dot products and knowing if the
+					# polygon is clockwise or counterclockwise... but for now make sure the rect and
+					# new path's area equals the path of the old area... otherwise we're adding space
+					# rather than dividing.
+					var area_of_two_parts = rect.get_area() + measure_area(shorter_path)
+					if area_of_two_parts == measure_area(path):
+						assert(is_path_valid(shorter_path))
+						return [rect_to_path(rect), shorter_path]
 	print(str(path))
 	assert(false, "we should always find something")
 	return []
@@ -516,7 +595,7 @@ func complete_loop(x : int, y : int) -> void:
 	var two_loops : Array = create_both_loops()
 	var loop_1_area : int = measure_area(two_loops[0])
 	var loop_2_area : int = measure_area(two_loops[1])
-	print("%s + %s = %s" % [loop_1_area, loop_2_area, loop_1_area + loop_2_area])
+	#print("%s + %s = %s" % [loop_1_area, loop_2_area, loop_1_area + loop_2_area])
 	if loop_1_area < loop_2_area:
 		score_loop(loop_1_area, two_loops[0])
 		outer_lines = two_loops[1]
