@@ -5,10 +5,10 @@ class_name PlayState
 @export var fade_in : bool = false
 @export var fade_out : bool = false
 @export var fade_time : float = 1.5
-@export var player_speed : float = 200
+@export var player_speed_inner : float = 350
+@export var player_speed_outer : float = 350
 
 var enemy : Enemy = null
-var enemy_pos : Vector2i
 var outer_lines : Array = []
 var inner_lines : Array = []
 var completed_rects : Array = []
@@ -26,8 +26,12 @@ func init_state(state_machine: StateMachine) -> void:
 
 var player_movement : Vector2 = Vector2.ZERO
 func add_player_direction(dx : float, dy : float) -> void:
-	dx = dx * player_speed
-	dy = dy * player_speed
+	if player_on_outer_lines:
+		dx = dx * player_speed_outer
+		dy = dy * player_speed_outer
+	else:
+		dx = dx * player_speed_inner
+		dy = dy * player_speed_inner
 	if player_movement == Vector2.ZERO:
 		player_movement = Vector2(dx, dy)
 		return
@@ -424,13 +428,17 @@ func break_out_square(path : Array) -> Array: # square, then remaining path
 						elif j == prev:
 							continue
 						elif j == prevprev:
-							assert(new_loc_on_next != path[j][0])
-							shorter_path.append([path[j][0], new_loc_on_next])
-							assert(is_path_element_valid(shorter_path.back()))
+							if new_loc_on_next != path[j][0]:
+								shorter_path.append([path[j][0], new_loc_on_next])
+								assert(is_path_element_valid(shorter_path.back()))
+							else:
+								print("Omitted %s" % new_loc_on_next)
 						elif j == next:
-							assert(new_loc_on_next != path[j][1])
-							shorter_path.append([new_loc_on_next, path[j][1]])
-							assert(is_path_element_valid(shorter_path.back()))
+							if new_loc_on_next != path[j][1]:
+								shorter_path.append([new_loc_on_next, path[j][1]])
+								assert(is_path_element_valid(shorter_path.back()))
+							else:
+								print("Omitted %s" % new_loc_on_next)
 						else:
 							shorter_path.append(path[j])
 							assert(is_path_element_valid(shorter_path.back()))
@@ -447,13 +455,17 @@ func break_out_square(path : Array) -> Array: # square, then remaining path
 						elif j == next:
 							continue
 						elif j == nextnext:
-							assert(new_loc_on_prev != path[j][1])
-							shorter_path.append([new_loc_on_prev, path[j][1]])
-							assert(is_path_element_valid(shorter_path.back()))
+							if new_loc_on_prev != path[j][1]:
+								shorter_path.append([new_loc_on_prev, path[j][1]])
+								assert(is_path_element_valid(shorter_path.back()))
+							else:
+								print("Omitted %s" % new_loc_on_prev)
 						elif j == prev:
-							assert(new_loc_on_prev != path[j][0])
-							shorter_path.append([path[j][0], new_loc_on_prev])
-							assert(is_path_element_valid(shorter_path.back()))
+							if new_loc_on_prev != path[j][0]:
+								shorter_path.append([path[j][0], new_loc_on_prev])
+								assert(is_path_element_valid(shorter_path.back()))
+							else:
+								print("Omitted %s" % new_loc_on_prev)
 						else:
 							shorter_path.append(path[j])
 							assert(is_path_element_valid(shorter_path.back()))
@@ -534,83 +546,6 @@ func break_out_square(path : Array) -> Array: # square, then remaining path
 	assert(false, "we should always find something")
 	return []
 
-# TODO: Needs to be re-written
-func break_out_square_old(path : Array) -> Array: # square, then remaining path
-	var signed_area = get_signed_area_of_path(path)
-	print("signed area = %s" % [signed_area])
-	var square : Array = []
-	var remaining : Array = []
-	for i in range(0, path.size()):
-		var q : int = (i + path.size() - 1) % path.size()
-		var n : int = (i + 1) % path.size()
-		var m : int = (i + 2) % path.size()
-		var c1 : Vector2i = path[i][0]
-		var f1 : Vector2i = path[i][1]
-		var c2 : Vector2i = path[n][1]
-		var f2 : Vector2i
-		if c1.x == f1.x:
-			f2.x = c2.x
-			f2.y = c1.y
-		else:
-			f2.x = c1.x
-			f2.y = c2.y
-		if on_line(f2.x, f2.y, path[m][0], path[m][1]):
-			square = [[c1, f1], [f1, c2], [c2, f2], [f2, c1]]
-			for j in range(0, path.size()):
-				if j == i:
-					# delete this
-					continue
-				if j == n:
-					# delete this
-					continue
-				if j == q:
-					if path[q][0] != f2:
-						remaining.append([path[q][0], f2])
-					continue
-				if j == m:
-					if f2 != path[m][1]:
-						remaining.append([f2,path[m][1]])
-					continue
-				remaining.append(path[j])
-			return [square, cleanup_path(remaining)]
-		# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-		# all of this is dubious? but maybe works?
-		c1 = path[n][1]
-		f1 = path[n][0]
-		c2 = path[i][0]
-		if c1.x == f1.x:
-			f2.x = c2.x
-			f2.y = c1.y
-		else:
-			f2.x = c1.x
-			f2.y = c2.y
-		if on_line(f2.x, f2.y, path[q][0], path[q][1]):
-			square = [[c1, f1], [f1, c2], [c2, f2], [f2, c1]]
-			for j in range(0, path.size()):
-				if j == i:
-					# delete this
-					continue
-				if j == n:
-					# delete this
-					continue
-				if j == q:
-					if path[q][0] != f2:
-						remaining.append([path[q][0], f2])
-					continue
-				if j == m:
-					if f2 != path[m][1]:
-						remaining.append([f2,path[m][1]])
-					continue
-				remaining.append(path[j])
-			return [square, cleanup_path(remaining)]
-		# END DUBIOUS
-		# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-	if square.is_empty():
-		print("Found no square in path")
-		print(str(path))
-		assert(false, "Found no square in path")
-	return [square, cleanup_path(remaining)]
-
 func cleanup_path(path : Array) -> Array:
 	for i in range(0, path.size()):
 		var n : int = (i + 1) % path.size()
@@ -681,7 +616,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 	rotate_player += 5.0 * delta
 	process_player_input(delta)
-	move_enemy(delta)
+	enemy.move_enemy(delta)
 
 func process_player_input(delta : float) -> void:
 	if player_on_outer_lines == false:
@@ -755,19 +690,6 @@ func process_outer_line_input(delta : float) -> bool:
 		return true
 	return false
 
-func move_enemy(delta : float) -> void:
-	var old_pos : Vector2i = enemy_pos
-	enemy_pos = enemy.get_new_pos(delta)
-	if (old_pos - enemy_pos).length() > 2:
-		print("Enemy teleported")
-	if is_on_inner_line(enemy_pos.x, enemy_pos.y):
-		on_player_death()
-	elif is_on_outer_line(enemy_pos.x, enemy_pos.y):
-		enemy.chose_new_goal()
-	elif is_in_claimed_area(enemy_pos.x, enemy_pos.y, true):
-		print("Enemy %s on claimed spot %s" % [enemy_pos, highlight_rect])
-		enemy_pos = enemy.on_in_claimed_area()
-
 #func fancy_draw_line(start : Vector2, end : Vector2, color : Color) -> void:
 #	var delta : Vector2 = end - start
 #	var inc : float = float(1) / 10
@@ -803,11 +725,12 @@ func _draw() -> void:
 	elif rp % 2 == 1:
 		draw_line(p_loc - Vector2(player_length, player_length), p_loc + Vector2(player_length, player_length), Color.BLUE)
 		draw_line(p_loc - Vector2(-player_length, player_length), p_loc + Vector2(-player_length, player_length), Color.BLUE)
-	var e_loc : Vector2 = offset + (enemy_pos as Vector2)
-	draw_circle(e_loc, 3, Color.BLUE_VIOLET)
+	enemy.render(offset)
 
 var highlight_rect : Rect2i
 func is_in_claimed_area(x : int, y : int, highlight : bool) -> bool:
+	if x < 0 || y < 0 || x >= play_field.size.x || y >= play_field.size.y:
+		return true
 	for rect : Rect2i in completed_rects:
 		if x >= rect.position.x && x <= rect.end.x:
 			if y >= rect.position.y && y <= rect.end.y:
@@ -816,21 +739,7 @@ func is_in_claimed_area(x : int, y : int, highlight : bool) -> bool:
 				return true
 	return false
 
-var rng : RandomNumberGenerator = RandomNumberGenerator.new()
-func get_spawn_spot() -> Vector2i:
-	var best_spot : Vector2i
-	var best_dist : int = 0
-	var potential_spots : int = 0
-	while potential_spots < 10:
-		var x : int = rng.randi_range(0, int(play_field.size.x) - 1)
-		var y : int = rng.randi_range(0, int(play_field.size.y) - 1)
-		if !is_in_claimed_area(x, y, false):
-			potential_spots += 1
-			var dist_squared : int = (Vector2i(x,y) - player_pos).length_squared()
-			if best_spot == null || dist_squared > best_dist:
-				best_spot = Vector2i(x, y)
-				best_dist = dist_squared
-	return best_spot
+#var rng : RandomNumberGenerator = RandomNumberGenerator.new()
 	
 func add_line(start : Vector2i, end : Vector2i) -> void:
 	outer_lines.append([start, end])
@@ -852,7 +761,6 @@ func init_game() -> void:
 	player_pos = Vector2(0, play_field.size.y / 2)
 	enemy = Enemy.new()
 	enemy.init(self)
-	enemy_pos = get_spawn_spot()
 	add_child(enemy)
 
 func enter_state() -> void:
