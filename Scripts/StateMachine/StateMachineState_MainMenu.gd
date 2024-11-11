@@ -32,17 +32,17 @@ func leave_state(next_state : String) -> void:
 	else:
 		our_state_machine.switch_state(next_state)
 
-func _draw() -> void:
-	var l : Array = [
-		[Vector2(0, 368), Vector2(127, 368)],
-		[Vector2(127, 368), Vector2(127, 338)],
-		[Vector2(127, 338), Vector2(97, 338)],
-		[Vector2(97, 338), Vector2(97, 408)],
-		[Vector2(97, 408), Vector2(0, 408)],
-		[Vector2(0, 408), Vector2(0, 368)]
-	]
-	for line in l:
-		draw_line(line[0] + Vector2(20,20), line[1] + Vector2(20,20), Color.RED)
+#func _draw() -> void:
+	#var l : Array = [
+		#[Vector2(0, 368), Vector2(127, 368)],
+		#[Vector2(127, 368), Vector2(127, 338)],
+		#[Vector2(127, 338), Vector2(97, 338)],
+		#[Vector2(97, 338), Vector2(97, 408)],
+		#[Vector2(97, 408), Vector2(0, 408)],
+		#[Vector2(0, 408), Vector2(0, 368)]
+	#]
+	#for line in l:
+		#draw_line(line[0] + Vector2(20,20), line[1] + Vector2(20,20), Color.RED)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:

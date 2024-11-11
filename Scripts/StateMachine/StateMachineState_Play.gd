@@ -1,10 +1,14 @@
 extends StateMachineState
 
+class_name PlayState
+
 @export var fade_in : bool = false
 @export var fade_out : bool = false
 @export var fade_time : float = 1.5
 @export var player_speed : float = 200
 
+var enemy : Enemy = null
+var enemy_pos : Vector2i
 var outer_lines : Array = []
 var inner_lines : Array = []
 var completed_rects : Array = []
@@ -26,16 +30,13 @@ func add_player_direction(dx : float, dy : float) -> void:
 	dy = dy * player_speed
 	if player_movement == Vector2.ZERO:
 		player_movement = Vector2(dx, dy)
-		print("Starting movement")
 		return
 	var m : Vector2 = player_movement * Vector2(dx, dy)
 	if m == Vector2.ZERO:
 		player_movement = Vector2(dx, dy)
-		print("Movement changed axis")
 		return
 	if m.x < 0 || m.y < 0:
 		player_movement = Vector2(dx, dy)
-		print("Movement changed direction")
 		return
 	
 	player_movement += Vector2(dx, dy)
@@ -237,8 +238,9 @@ func create_both_loops() -> Array:
 		var inner_start_to_outer_end : Vector2i = (inner_lines.front()[0] - outer_lines[outer_start_index][1]);
 		if inner_end_to_outer_end.length_squared() < inner_start_to_outer_end.length_squared():
 			# The end of the inner loop is closer to the end of the line segment we're attached to
-			loop_2.append([inner_lines.back()[1], outer_lines[outer_start_index][1]])
-			assert(is_path_element_valid(loop_2.back()))
+			if inner_lines.back()[1] != outer_lines[outer_start_index][1]:
+				loop_2.append([inner_lines.back()[1], outer_lines[outer_start_index][1]])
+				assert(is_path_element_valid(loop_2.back()))
 			var l : int = (outer_start_index + 1) % outer_lines.size()
 			while l != outer_start_index:
 				loop_2.append(outer_lines[l])
@@ -253,8 +255,9 @@ func create_both_loops() -> Array:
 		else:
 			# The start of the inner loop is closer to the end of the line segment we're attached to so
 			# the end of the inner loop must be closer to the start of the line segment we're attached to
-			loop_2.append([inner_lines.back()[1], outer_lines[outer_start_index][0]])
-			assert(is_path_element_valid(loop_2.back()))
+			if inner_lines.back()[1] != outer_lines[outer_start_index][0]:
+				loop_2.append([inner_lines.back()[1], outer_lines[outer_start_index][0]])
+				assert(is_path_element_valid(loop_2.back()))
 			var l : int = (outer_start_index + outer_lines.size() - 1) % outer_lines.size()
 			while l != outer_start_index:
 				# TODO: We shouldn't be reversing the outer_lines, we should instead be reversing the inner_lines
@@ -678,6 +681,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 	rotate_player += 5.0 * delta
 	process_player_input(delta)
+	move_enemy(delta)
 
 func process_player_input(delta : float) -> void:
 	if player_on_outer_lines == false:
@@ -751,6 +755,19 @@ func process_outer_line_input(delta : float) -> bool:
 		return true
 	return false
 
+func move_enemy(delta : float) -> void:
+	var old_pos : Vector2i = enemy_pos
+	enemy_pos = enemy.get_new_pos(delta)
+	if (old_pos - enemy_pos).length() > 2:
+		print("Enemy teleported")
+	if is_on_inner_line(enemy_pos.x, enemy_pos.y):
+		on_player_death()
+	elif is_on_outer_line(enemy_pos.x, enemy_pos.y):
+		enemy.chose_new_goal()
+	elif is_in_claimed_area(enemy_pos.x, enemy_pos.y, true):
+		print("Enemy %s on claimed spot %s" % [enemy_pos, highlight_rect])
+		enemy_pos = enemy.on_in_claimed_area()
+
 #func fancy_draw_line(start : Vector2, end : Vector2, color : Color) -> void:
 #	var delta : Vector2 = end - start
 #	var inc : float = float(1) / 10
@@ -767,7 +784,10 @@ func _draw() -> void:
 	var offset : Vector2 = play_field.global_position - self.global_position
 
 	for rect : Rect2i in completed_rects:
-		draw_rect(Rect2(rect.position as Vector2 + offset, rect.size), Color.YELLOW)
+		var rect_color : Color = Color.YELLOW
+		if rect == highlight_rect:
+			rect_color = Color.ORCHID
+		draw_rect(Rect2(rect.position as Vector2 + offset, rect.size), rect_color)
 
 	for line : Array in outer_lines:
 		draw_line(offset + (line[0] as Vector2), offset + (line[1] as Vector2), Color.WHITE)
@@ -778,12 +798,40 @@ func _draw() -> void:
 	var rp : int = round(rotate_player) as int
 	var p_loc : Vector2 = offset + (player_pos as Vector2)
 	if rp % 2 == 0:
-		self.draw_line(p_loc - Vector2(player_length, 0), p_loc + Vector2(player_length, 0), Color.BLUE)
-		self.draw_line(p_loc - Vector2(0, player_length), p_loc + Vector2(0, player_length), Color.BLUE)
+		draw_line(p_loc - Vector2(player_length, 0), p_loc + Vector2(player_length, 0), Color.BLUE)
+		draw_line(p_loc - Vector2(0, player_length), p_loc + Vector2(0, player_length), Color.BLUE)
 	elif rp % 2 == 1:
-		self.draw_line(p_loc - Vector2(player_length, player_length), p_loc + Vector2(player_length, player_length), Color.BLUE)
-		self.draw_line(p_loc - Vector2(-player_length, player_length), p_loc + Vector2(-player_length, player_length), Color.BLUE)
+		draw_line(p_loc - Vector2(player_length, player_length), p_loc + Vector2(player_length, player_length), Color.BLUE)
+		draw_line(p_loc - Vector2(-player_length, player_length), p_loc + Vector2(-player_length, player_length), Color.BLUE)
+	var e_loc : Vector2 = offset + (enemy_pos as Vector2)
+	draw_circle(e_loc, 3, Color.BLUE_VIOLET)
 
+var highlight_rect : Rect2i
+func is_in_claimed_area(x : int, y : int, highlight : bool) -> bool:
+	for rect : Rect2i in completed_rects:
+		if x >= rect.position.x && x <= rect.end.x:
+			if y >= rect.position.y && y <= rect.end.y:
+				if highlight:
+					highlight_rect = rect
+				return true
+	return false
+
+var rng : RandomNumberGenerator = RandomNumberGenerator.new()
+func get_spawn_spot() -> Vector2i:
+	var best_spot : Vector2i
+	var best_dist : int = 0
+	var potential_spots : int = 0
+	while potential_spots < 10:
+		var x : int = rng.randi_range(0, int(play_field.size.x))
+		var y : int = rng.randi_range(0, int(play_field.size.y))
+		if !is_in_claimed_area(x, y, false):
+			potential_spots += 1
+			var dist_squared : int = (Vector2i(x,y) - player_pos).length_squared()
+			if best_spot == null || dist_squared > best_dist:
+				best_spot = Vector2i(x, y)
+				best_dist = dist_squared
+	return best_spot
+	
 func add_line(start : Vector2i, end : Vector2i) -> void:
 	outer_lines.append([start, end])
 
@@ -802,6 +850,10 @@ func init_game() -> void:
 	add_line(Vector2i(0, pfs.y), Vector2i(0,0))
 	play_field.hide() # TODO: Move the drawing code to a script running on the play_field
 	player_pos = Vector2(0, play_field.size.y / 2)
+	enemy = Enemy.new()
+	enemy.init(self)
+	enemy_pos = get_spawn_spot()
+	add_child(enemy)
 
 func enter_state() -> void:
 	super.enter_state()
