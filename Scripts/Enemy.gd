@@ -128,7 +128,7 @@ func move_enemy(delta : float) -> void:
 		print("Enemy from %s to %s on claimed spot %s" % [old_pos, pos_on_field, play_state.highlight_rect])
 		change_state(EnemyState.TRAPPED)
 
-func get_v2i_direction(v : Vector2i) -> Vector2i:
+static func get_v2i_direction(v : Vector2i) -> Vector2i:
 	if v == Vector2i.ZERO:
 		return Vector2i.ZERO
 	if abs(v.x) == abs(v.y):

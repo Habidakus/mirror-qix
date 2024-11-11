@@ -9,6 +9,7 @@ class_name PlayState
 @export var player_speed_outer : float = 150
 
 var enemy : Enemy = null
+var fuze : Fuze = null
 var outer_lines : Array = []
 var inner_lines : Array = []
 var completed_rects : Array = []
@@ -623,6 +624,7 @@ func _process(delta: float) -> void:
 	rotate_player += 5.0 * delta
 	process_player_input(delta)
 	enemy.move_enemy(delta)
+	fuze.move_fuze(delta)
 
 func process_player_input(delta : float) -> void:
 	if player_on_outer_lines == false:
@@ -732,15 +734,8 @@ func _draw() -> void:
 		draw_line(p_loc - Vector2(player_length, player_length), p_loc + Vector2(player_length, player_length), Color.BLUE)
 		draw_line(p_loc - Vector2(-player_length, player_length), p_loc + Vector2(-player_length, player_length), Color.BLUE)
 	
-	var opp : Vector2 = offset + (point_opposite_player() as Vector2)
-	if rp % 2 == 0:
-		draw_line(opp - Vector2(player_length, 0), opp + Vector2(player_length, 0), Color.GREEN)
-		draw_line(opp - Vector2(0, player_length), opp + Vector2(0, player_length), Color.GREEN)
-	elif rp % 2 == 1:
-		draw_line(opp - Vector2(player_length, player_length), opp + Vector2(player_length, player_length), Color.GREEN)
-		draw_line(opp - Vector2(-player_length, player_length), opp + Vector2(-player_length, player_length), Color.GREEN)
-	
 	enemy.render(offset)
+	fuze.render(offset)
 
 var highlight_rect : Rect2i
 func is_in_claimed_area(x : int, y : int, highlight : bool) -> bool:
@@ -774,7 +769,7 @@ func half_way_around_outer_line(pos : Vector2i) -> Vector2i:
 			var remaining : int = (pos - outer_lines[i][1]).length()
 			if dist < remaining:
 				# This should never happen, but let's just check to be sure
-				var dir : Vector2i = enemy.get_v2i_direction(outer_lines[i][1] - outer_lines[i][0])
+				var dir : Vector2i = Enemy.get_v2i_direction(outer_lines[i][1] - outer_lines[i][0])
 				return dist * dir + pos
 			dist -= remaining
 			var n : int = i
@@ -782,7 +777,7 @@ func half_way_around_outer_line(pos : Vector2i) -> Vector2i:
 				n = (n + 1) % outer_lines.size()
 				var line_length : int = (outer_lines[n][0] - outer_lines[n][1]).length()
 				if dist < line_length:
-					var dir : Vector2i = enemy.get_v2i_direction(outer_lines[n][1] - outer_lines[n][0])
+					var dir : Vector2i = Enemy.get_v2i_direction(outer_lines[n][1] - outer_lines[n][0])
 					return dist * dir + outer_lines[n][0]
 				dist -= line_length
 	assert(false)
@@ -812,6 +807,9 @@ func init_game() -> void:
 	enemy = Enemy.new()
 	enemy.init(self)
 	add_child(enemy)
+	fuze = Fuze.new()
+	fuze.init(self)
+	add_child(fuze)
 
 func enter_state() -> void:
 	super.enter_state()
