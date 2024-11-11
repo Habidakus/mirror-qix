@@ -822,8 +822,8 @@ func get_spawn_spot() -> Vector2i:
 	var best_dist : int = 0
 	var potential_spots : int = 0
 	while potential_spots < 10:
-		var x : int = rng.randi_range(0, int(play_field.size.x))
-		var y : int = rng.randi_range(0, int(play_field.size.y))
+		var x : int = rng.randi_range(0, int(play_field.size.x) - 1)
+		var y : int = rng.randi_range(0, int(play_field.size.y) - 1)
 		if !is_in_claimed_area(x, y, false):
 			potential_spots += 1
 			var dist_squared : int = (Vector2i(x,y) - player_pos).length_squared()
