@@ -731,6 +731,15 @@ func _draw() -> void:
 	elif rp % 2 == 1:
 		draw_line(p_loc - Vector2(player_length, player_length), p_loc + Vector2(player_length, player_length), Color.BLUE)
 		draw_line(p_loc - Vector2(-player_length, player_length), p_loc + Vector2(-player_length, player_length), Color.BLUE)
+	
+	var opp : Vector2 = offset + (point_opposite_player() as Vector2)
+	if rp % 2 == 0:
+		draw_line(opp - Vector2(player_length, 0), opp + Vector2(player_length, 0), Color.GREEN)
+		draw_line(opp - Vector2(0, player_length), opp + Vector2(0, player_length), Color.GREEN)
+	elif rp % 2 == 1:
+		draw_line(opp - Vector2(player_length, player_length), opp + Vector2(player_length, player_length), Color.GREEN)
+		draw_line(opp - Vector2(-player_length, player_length), opp + Vector2(-player_length, player_length), Color.GREEN)
+	
 	enemy.render(offset)
 
 var highlight_rect : Rect2i
@@ -749,6 +758,41 @@ func is_in_claimed_area(x : int, y : int, highlight : bool) -> bool:
 	
 func add_line(start : Vector2i, end : Vector2i) -> void:
 	outer_lines.append([start, end])
+
+func get_path_length(path : Array) -> int:
+	var dist : int = 0
+	for line in path:
+		dist += (line[0] - line[1]).length()
+	return dist
+
+func half_way_around_outer_line(pos : Vector2i) -> Vector2i:
+	assert(is_on_outer_line(pos.x, pos.y))
+	for i in range(0, outer_lines.size()):
+		if on_line(pos.x, pos.y, outer_lines[i][0], outer_lines[i][1]):
+			var dist : int = get_path_length(outer_lines)
+			dist /= 2
+			var remaining : int = (pos - outer_lines[i][1]).length()
+			if dist < remaining:
+				# This should never happen, but let's just check to be sure
+				var dir : Vector2i = enemy.get_v2i_direction(outer_lines[i][1] - outer_lines[i][0])
+				return dist * dir + pos
+			dist -= remaining
+			var n : int = i
+			while true:
+				n = (n + 1) % outer_lines.size()
+				var line_length : int = (outer_lines[n][0] - outer_lines[n][1]).length()
+				if dist < line_length:
+					var dir : Vector2i = enemy.get_v2i_direction(outer_lines[n][1] - outer_lines[n][0])
+					return dist * dir + outer_lines[n][0]
+				dist -= line_length
+	assert(false)
+	return outer_lines[0][0]
+
+func point_opposite_player() -> Vector2i:
+	if player_on_outer_lines:
+		return half_way_around_outer_line(player_pos)
+	else:
+		return half_way_around_outer_line(inner_lines.front()[0])
 
 func init_game() -> void:
 	play_field = find_child("PlayField") as Control
