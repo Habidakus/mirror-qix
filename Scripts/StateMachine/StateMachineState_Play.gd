@@ -5,8 +5,8 @@ class_name PlayState
 @export var fade_in : bool = false
 @export var fade_out : bool = false
 @export var fade_time : float = 1.5
-@export var player_speed_inner : float = 350
-@export var player_speed_outer : float = 350
+@export var player_speed_inner : float = 100
+@export var player_speed_outer : float = 150
 
 var enemy : Enemy = null
 var outer_lines : Array = []
@@ -44,18 +44,22 @@ func add_player_direction(dx : float, dy : float) -> void:
 		return
 	
 	player_movement += Vector2(dx, dy)
-	if player_movement.x >= 1:
-		move_if_possible(player_pos.x + 1, player_pos.y)
-		player_movement.x -= 1
-	elif player_movement.y >= 1:
-		move_if_possible(player_pos.x, player_pos.y + 1)
-		player_movement.y -= 1
-	elif player_movement.x <= -1:
-		move_if_possible(player_pos.x - 1, player_pos.y)
-		player_movement.x += 1
-	elif player_movement.y <= -1:
-		move_if_possible(player_pos.x, player_pos.y - 1)
-		player_movement.y += 1
+	var can_continue : bool = true
+	while can_continue:
+		if player_movement.x >= 1:
+			can_continue = move_if_possible(player_pos.x + 1, player_pos.y)
+			player_movement.x -= 1
+		elif player_movement.y >= 1:
+			can_continue = move_if_possible(player_pos.x, player_pos.y + 1)
+			player_movement.y -= 1
+		elif player_movement.x <= -1:
+			can_continue = move_if_possible(player_pos.x - 1, player_pos.y)
+			player_movement.x += 1
+		elif player_movement.y <= -1:
+			can_continue = move_if_possible(player_pos.x, player_pos.y - 1)
+			player_movement.y += 1
+		else:
+			can_continue = false
 
 func on_line(x : int, y : int, start : Vector2i, end : Vector2i) -> bool:
 	if start.x == end.x and start.x == x:
@@ -592,25 +596,27 @@ func complete_loop(x : int, y : int) -> void:
 	inner_lines = []
 	player_on_outer_lines = true
 
-func move_if_possible(x : int, y : int) -> void:
+func move_if_possible(x : int, y : int) -> bool: # returns true if we can continue calling this
 	if player_on_outer_lines:
 		if is_on_outer_line(x, y):
 			player_pos = Vector2i(x, y)
-		return
+			return true
+		return false
 	# Process building new inner line
 	if is_on_outer_line(x, y):
 		# completed area
 		complete_loop(x, y)
-		return
+		return false
 	if is_on_inner_line(x, y):
 		on_player_death()
-		return
+		return false
 	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
 		inner_lines.back()[1] = Vector2i(x, y)
 		player_pos = Vector2i(x, y)
-		return
+		return true
 	inner_lines.append([player_pos, Vector2i(x, y)])
 	player_pos = Vector2i(x, y)
+	return true
 
 func _process(delta: float) -> void:
 	queue_redraw()

@@ -69,7 +69,6 @@ func chose_new_goal_and_state() -> void:
 func chose_new_goal() -> void:
 	move_work = Vector2.ZERO
 	goal_pos = get_goal_spot()
-	print("New goal spot: %s" % [goal_pos])
 
 func get_new_pos(delta: float) -> Vector2i:
 	var new_pos : Vector2i = pos_on_field
@@ -94,7 +93,9 @@ func render(offset : Vector2) -> void:
 	var loc : Vector2 = offset + (pos_on_field as Vector2)
 	var radius : float = 3
 	if current_enemy_state == EnemyState.TRAPPED:
-		play_state.draw_circle(loc, radius, Color.BLACK)
+		var trapped_phase : int = int(10.0 * stun_remaining / max_stun_time) % 2
+		var trapped_radius : float = radius * (0.5 + float(trapped_phase) * 1.5)
+		play_state.draw_circle(loc, trapped_radius, Color.BLACK)
 	elif current_enemy_state == EnemyState.MOVING:
 		play_state.draw_circle(loc, radius, Color.DARK_VIOLET)
 	elif current_enemy_state == EnemyState.HUNTING:
@@ -115,17 +116,33 @@ func move_enemy(delta : float) -> void:
 		print("Enemy teleported")
 	
 	if pos_on_field == goal_pos:
-		print("Goal reached")
 		chose_new_goal_and_state()
 	
 	if play_state.is_on_inner_line(pos_on_field.x, pos_on_field.y):
 		play_state.on_player_death()
 	elif play_state.is_on_outer_line(pos_on_field.x, pos_on_field.y):
 		print("Enemy from %s to %s bounced off outer line" % [old_pos, pos_on_field])
+		move_work = Vector2.ZERO
 		chose_new_goal_and_state()
 	elif play_state.is_in_claimed_area(pos_on_field.x, pos_on_field.y, true):
 		print("Enemy from %s to %s on claimed spot %s" % [old_pos, pos_on_field, play_state.highlight_rect])
 		change_state(EnemyState.TRAPPED)
+
+func get_v2i_direction(v : Vector2i) -> Vector2i:
+	if v == Vector2i.ZERO:
+		return Vector2i.ZERO
+	if abs(v.x) == abs(v.y):
+		return v / abs(v.x)
+	if abs(v.x) > abs(v.y):
+		if v.x > 0:
+			return Vector2i(1, 0)
+		else:
+			return Vector2i(-1, 0)
+	else:
+		if v.y > 0:
+			return Vector2i(0, 1)
+		else:
+			return Vector2i(0, -1)
 
 func get_spawn_spot() -> Vector2i:
 	var best_spot : Vector2i
@@ -149,16 +166,20 @@ func get_goal_spot() -> Vector2i:
 	while potential_spots < 10:
 		var x : int = rng.randi_range(0, int(play_state.play_field.size.x) - 1)
 		var y : int = rng.randi_range(0, int(play_state.play_field.size.y) - 1)
-		if !play_state.is_in_claimed_area(x, y, false):
-			potential_spots += 1
-			if current_enemy_state == EnemyState.HUNTING:
-				var dist_squared = (Vector2i(x,y) - play_state.player_pos).length_squared()
-				if best_spot == null || best_dist == 0 || dist_squared < best_dist:
-					best_spot = Vector2i(x, y)
-					best_dist = dist_squared
-			else:
-				var dist_squared = (Vector2i(x,y) - pos_on_field).length_squared()
-				if best_spot == null || best_dist == 0 || dist_squared < best_dist:
-					best_spot = Vector2i(x, y)
-					best_dist = dist_squared
+		if play_state.is_in_claimed_area(x, y, false):
+			continue
+		var dir : Vector2i = get_v2i_direction(Vector2i(x,y) - pos_on_field)
+		if play_state.is_in_claimed_area(pos_on_field.x + dir.x, pos_on_field.y + dir.y, false):
+			continue
+		potential_spots += 1
+		if current_enemy_state == EnemyState.HUNTING:
+			var dist_squared = (Vector2i(x,y) - play_state.player_pos).length_squared()
+			if best_spot == null || best_dist == 0 || dist_squared < best_dist:
+				best_spot = Vector2i(x, y)
+				best_dist = dist_squared
+		else:
+			var dist_squared = (Vector2i(x,y) - pos_on_field).length_squared()
+			if best_spot == null || best_dist == 0 || dist_squared < best_dist:
+				best_spot = Vector2i(x, y)
+				best_dist = dist_squared
 	return best_spot
