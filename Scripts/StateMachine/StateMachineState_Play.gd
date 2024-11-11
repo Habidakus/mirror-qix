@@ -66,6 +66,13 @@ func on_line(x : int, y : int, start : Vector2i, end : Vector2i) -> bool:
 	#assert(false, "Odd line %s to %s" % [start, end])
 	return false
 
+func get_outer_line_element(pos : Vector2i) -> Array:
+	for line in outer_lines:
+		if on_line(pos.x, pos.y, line[0], line[1]):
+			return line
+	assert(false, "Asked for outer line containing %s, which no line does" % pos)
+	return []
+
 func is_on_outer_line(x : int, y : int) -> bool:
 	for line in outer_lines:
 		if on_line(x, y, line[0], line[1]):
@@ -129,6 +136,27 @@ func measure_area(lines : Array) -> int:
 	#print("Area = %s" % [area])
 	return area
 
+func hack_consolidate_neighbors(loop: Array) -> Array:
+	var mark_for_remove : Array = []
+	for i in range(0, loop.size()):
+		var n : int = (i + 1) % loop.size()
+		if are_path_elements_same_axis(loop[i], loop[n]):
+			assert(loop[i][1] == loop[n][0])
+			mark_for_remove.append(n)
+	if mark_for_remove.is_empty():
+		return loop
+	var ret_val : Array = []
+	for i in range(0, loop.size()):
+		var n : int = (i + 1) % loop.size()
+		var will_remove_next : bool = mark_for_remove.count(n) > 0
+		var will_remove_current : bool = mark_for_remove.count(i) > 0
+		assert(will_remove_next == false || will_remove_current == false, "We need to remove two in a row?!")
+		if will_remove_next:
+			ret_val.append([loop[i][0], loop[n][1]])
+		elif !will_remove_current:
+			ret_val.append(loop[i])
+	return ret_val
+
 func hack_reverse_loop(loop : Array) -> Array:
 	var retVal : Array = []
 	for i in range(0, loop.size()):
@@ -159,19 +187,28 @@ func create_both_loops() -> Array:
 	var loop_2 : Array = inner_lines.duplicate(true)
 	
 	if outer_start_index != outer_end_index:
-		loop_1.append([inner_lines.back()[1], outer_lines[outer_end_index][1]])
-		assert(is_path_element_valid(loop_1.back()))
+		if inner_lines.back()[1] != outer_lines[outer_end_index][1]:
+			loop_1.append([inner_lines.back()[1], outer_lines[outer_end_index][1]])
+			assert(is_path_element_valid(loop_1.back()))
+		#else:
+		#	loop_1 = hack_consolidate_neighbors(loop_1)
 		var l1 : int = (outer_end_index + 1) % outer_lines.size()
 		while l1 != outer_start_index:
 			loop_1.append(outer_lines[l1])
 			assert(is_path_element_valid(loop_1.back()))
 			l1 = (l1 + 1) % outer_lines.size()
-		loop_1.append([outer_lines[outer_start_index][0], inner_lines.front()[0]])
-		assert(is_path_element_valid(loop_1.back()))
+		if outer_lines[outer_start_index][0] != inner_lines.front()[0]:
+			loop_1.append([outer_lines[outer_start_index][0], inner_lines.front()[0]])
+			assert(is_path_element_valid(loop_1.back()))
+		#else:
+		loop_1 = hack_consolidate_neighbors(loop_1)
 		assert(is_path_valid(loop_1))
 
-		loop_2.append([inner_lines.back()[1], outer_lines[outer_end_index][0]])
-		assert(is_path_element_valid(loop_2.back()))
+		if inner_lines.back()[1] != outer_lines[outer_end_index][0]:
+			loop_2.append([inner_lines.back()[1], outer_lines[outer_end_index][0]])
+			assert(is_path_element_valid(loop_2.back()))
+		#else:
+		#	loop_2 = hack_consolidate_neighbors(loop_2)
 		var l2 : int = (outer_end_index + outer_lines.size() - 1) % outer_lines.size()
 		while l2 != outer_start_index:
 			# TODO: We shouldn't be reversing the outer_lines, we should instead be reversing the inner_lines
@@ -179,8 +216,11 @@ func create_both_loops() -> Array:
 			loop_2.append([outer_lines[l2][1], outer_lines[l2][0]])
 			assert(is_path_element_valid(loop_2.back()))
 			l2 = (l2 + outer_lines.size() - 1) % outer_lines.size()
-		loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
-		assert(is_path_element_valid(loop_2.back()))
+		if outer_lines[outer_start_index][1] != inner_lines.front()[0]:
+			loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
+			assert(is_path_element_valid(loop_2.back()))
+		#else:
+		loop_2 = hack_consolidate_neighbors(loop_2)
 		loop_2 = hack_reverse_loop(loop_2)
 		assert(is_path_valid(loop_2))
 	else:
@@ -188,6 +228,9 @@ func create_both_loops() -> Array:
 		# first loop is simple, we just close off the inner path to make it a loop.
 		loop_1.append([inner_lines.back()[1], inner_lines.front()[0]])
 		assert(is_path_element_valid(loop_1.back()))
+		if get_signed_area_of_path(loop_1) < 0:
+			loop_1 = hack_reverse_loop(loop_1)
+		assert(is_path_valid(loop_1))
 
 		# The other loop encorporates the entire outer_lines, except for the slice we took out
 		var inner_end_to_outer_end : Vector2i = (inner_lines.back()[1] - outer_lines[outer_start_index][1]);
@@ -201,13 +244,15 @@ func create_both_loops() -> Array:
 				loop_2.append(outer_lines[l])
 				assert(is_path_element_valid(loop_2.back()))
 				l = (l + 1) % outer_lines.size()
-			loop_2.append([outer_lines[outer_start_index][0], inner_lines.front()[0]])
-			assert(is_path_element_valid(loop_2.back()))
-			assert(is_path_valid(loop_1))
+			if outer_lines[outer_start_index][0] != inner_lines.front()[0]:
+				loop_2.append([outer_lines[outer_start_index][0], inner_lines.front()[0]])
+				assert(is_path_element_valid(loop_2.back()))
+			#else:
+			loop_2 = hack_consolidate_neighbors(loop_2)
+			assert(is_path_valid(loop_2))
 		else:
 			# The start of the inner loop is closer to the end of the line segment we're attached to so
 			# the end of the inner loop must be closer to the start of the line segment we're attached to
-			
 			loop_2.append([inner_lines.back()[1], outer_lines[outer_start_index][0]])
 			assert(is_path_element_valid(loop_2.back()))
 			var l : int = (outer_start_index + outer_lines.size() - 1) % outer_lines.size()
@@ -217,8 +262,11 @@ func create_both_loops() -> Array:
 				loop_2.append([outer_lines[l][1], outer_lines[l][0]])
 				assert(is_path_element_valid(loop_2.back()))
 				l = (l + outer_lines.size() - 1) % outer_lines.size()
-			loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
-			assert(is_path_element_valid(loop_2.back()))
+			if outer_lines[outer_start_index][1] != inner_lines.front()[0]:
+				loop_2.append([outer_lines[outer_start_index][1], inner_lines.front()[0]])
+				assert(is_path_element_valid(loop_2.back()))
+			#else:
+			loop_2 = hack_consolidate_neighbors(loop_2)
 			loop_2 = hack_reverse_loop(loop_2)
 			assert(is_path_valid(loop_2))
 			
@@ -649,11 +697,17 @@ func start_inner_path(x : int, y : int) -> void:
 		# Player trying to move outside of playing area
 		return
 
-	# TODO: Don't let player draw outside remaining area
-	# If we always have the outer_path going in the same direction (say clockwise) then
-	# we can use the dot product to make sure the player isn't leaving the path.
+	# Don't let player draw outside remaining area
+	var path_el_on_outer_line : Array = get_outer_line_element(player_pos)
+	var triangle_of_intent_path : Array = [
+		[path_el_on_outer_line[0], player_pos],
+		[player_pos, Vector2i(ix, iy)],
+		[Vector2i(ix, iy), path_el_on_outer_line[0]]
+	]
+	if get_signed_area_of_path(triangle_of_intent_path) < 0: # neg is counter clockwise path
+		return
 
-	if self.is_on_outer_line(ix, iy):
+	if is_on_outer_line(ix, iy):
 		# player trying to jump off one line onto another? Shouldn't happen, but stop it
 		print("Shouldn't happen?! Player starting innner line onto outer line")
 		return
