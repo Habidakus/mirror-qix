@@ -1,10 +1,14 @@
-[gd_scene load_steps=6 format=3 uid="uid://byexcr20v7axg"]
+[gd_scene load_steps=10 format=3 uid="uid://byexcr20v7axg"]
 
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachine.gd" id="1_srbky"]
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_AnyKeyToContinue.gd" id="2_4qlki"]
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_MainMenu.gd" id="3_25r5e"]
 [ext_resource type="Script" path="res://Scripts/Decorators/ControlDecorator.gd" id="4_w0rml"]
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_Play.gd" id="5_s7774"]
+[ext_resource type="Texture2D" uid="uid://dqcqjav83kkvi" path="res://Art/up_triangle.png" id="6_6usdd"]
+[ext_resource type="Texture2D" uid="uid://44pxrh1ctkak" path="res://Art/left_triangle.png" id="7_50vy4"]
+[ext_resource type="Texture2D" uid="uid://4lfljd6q5nqa" path="res://Art/right_triangle.png" id="8_utft1"]
+[ext_resource type="Texture2D" uid="uid://du8lyde75fgmk" path="res://Art/down_triangle.png" id="9_8hlwr"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -57,10 +61,11 @@ theme_override_constants/margin_bottom = 10
 layout_mode = 2
 
 [node name="Label" type="Label" parent="StateMachine/SplashScreen/MarginContainer/CenterContainer"]
-custom_minimum_size = Vector2(1000, 0)
+custom_minimum_size = Vector2(900, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 196
+theme_override_font_sizes/font_size = 180
 text = "Mirror Qix"
+horizontal_alignment = 1
 clip_text = true
 
 [node name="Menu" type="Control" parent="StateMachine"]
@@ -156,13 +161,176 @@ size_flags_stretch_ratio = 20.0
 [node name="HBoxContainer" type="HBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 
+[node name="Control" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 36
 text = "Score:"
 
 [node name="Score" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 36
 text = "0"
+
+[node name="Control2" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Control3" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GridContainer" type="GridContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 3
+
+[node name="Control" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="up_button" type="Button" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "
+W"
+icon = ExtResource("6_6usdd")
+flat = true
+icon_alignment = 1
+
+[node name="Control2" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="left_button" type="Button" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "     A"
+icon = ExtResource("7_50vy4")
+flat = true
+icon_alignment = 1
+
+[node name="Control3" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 32
+text = "Move"
+horizontal_alignment = 1
+
+[node name="right_button" type="Button" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "D      "
+icon = ExtResource("8_utft1")
+flat = true
+icon_alignment = 1
+
+[node name="Control4" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="down_button" type="Button" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "S
+ "
+icon = ExtResource("9_8hlwr")
+flat = true
+icon_alignment = 1
+
+[node name="Control5" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="Control4" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "Enable Build Mode:"
+horizontal_alignment = 1
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Control" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Button" type="Button" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "Space Bar"
+
+[node name="ColorRect" type="ColorRect" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2/Button"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2/Button/ColorRect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "Space Bar"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Control2" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="AspectRatioContainer" type="AspectRatioContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(600, 600)
