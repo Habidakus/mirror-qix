@@ -9,17 +9,22 @@ var rotate : float = 0
 var max_respawn_time : float = 2
 var respawn_remaining : float
 var current_state : FuzeState
+var move_buffer : float = 0
+var speed : float = 100
+var speed_mod : float = 1
 
 enum FuzeState {MOVING, RESPAWNING}
 
 func init(ps : PlayState, tier : int) -> void:
 	play_state = ps
 	difficulty_tier = tier
+	speed_mod = (10.0 + tier) / 10.0
 	change_state(FuzeState.RESPAWNING)
 
 func change_state(new_state : FuzeState) -> void:
 	if new_state == FuzeState.RESPAWNING:
 		current_state = FuzeState.RESPAWNING
+		move_buffer = 0
 		pos_on_field = play_state.point_opposite_player()
 		respawn_remaining = max_respawn_time * 5.0 / (5.0 + difficulty_tier)
 	else:
@@ -32,23 +37,27 @@ func move_fuze(delta : float) -> void:
 		if respawn_remaining < 0:
 			change_state(FuzeState.MOVING)
 		return
-		
-	var old_pos : Vector2i = pos_on_field
-	pos_on_field = get_new_pos(delta)
-	if current_state == FuzeState.RESPAWNING:
-		return
-
-	if (old_pos - pos_on_field).length() > 2:
-		print("Fuze teleported")
 	
-	if pos_on_field == play_state.player_pos:
-		play_state.on_player_death()
+	move_buffer += delta * speed * speed_mod
+	while move_buffer > 1:
+		move_buffer -= 1
+		
+		var old_pos : Vector2i = pos_on_field
+		pos_on_field = get_new_pos()
+		if current_state == FuzeState.RESPAWNING:
+			return
+
+		if (old_pos - pos_on_field).length() > 2:
+			print("Fuze teleported")
+		
+		if pos_on_field == play_state.player_pos:
+			play_state.on_player_death()
 
 func advance_along(start : Vector2i, end : Vector2i, pos : Vector2i) -> Vector2i:
 	var dir : Vector2i = Enemy.get_v2i_direction(end - start)
 	return pos + dir
 
-func get_new_pos(_delta : float) -> Vector2i:
+func get_new_pos() -> Vector2i:
 	for i in range(0, play_state.outer_lines.size()):
 		var line = play_state.outer_lines[i]
 		if play_state.on_line(pos_on_field.x, pos_on_field.y, line[0], line[1]):
