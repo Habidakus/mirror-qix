@@ -52,7 +52,10 @@ func _process(delta: float) -> void:
 	if current_enemy_state == EnemyState.RESPAWNING:
 		respawn_remaining -= delta
 		if respawn_remaining <= 0:
-			change_state(EnemyState.MOVING)
+			if play_state.is_in_claimed_area(pos_on_field.x, pos_on_field.y):
+				change_state(EnemyState.TRAPPED)
+			else: 
+				change_state(EnemyState.MOVING)
 			return
 	if current_enemy_state == EnemyState.TRAPPED:
 		stun_remaining -= delta
