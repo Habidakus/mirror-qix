@@ -11,6 +11,8 @@ class_name PlayState
 enum PlayerState { UNINITIALIZED, PLAYING, DEAD, WON_PAUSE }
 var player_state : PlayerState = PlayerState.UNINITIALIZED
 
+var assert_color : bool = false
+
 var enemy : Enemy = null
 var fuze : Fuze = null
 var outer_lines : Array = []
@@ -61,9 +63,13 @@ func add_player_direction(dx : float, dy : float) -> void:
 		return
 	var m : Vector2 = player_movement * Vector2(dx, dy)
 	if m == Vector2.ZERO:
+		# If m == 0,0 then we have switched our vector to perpendicular to what
+		# it was, replace stored movement with new movement
 		player_movement = Vector2(dx, dy)
 		return
 	if m.x < 0 || m.y < 0:
+		# if either m is negative, we've switched directions along an axis, so
+		# replace stored movement with new movement
 		player_movement = Vector2(dx, dy)
 		return
 	
@@ -264,6 +270,7 @@ func create_both_loops() -> Array:
 		assert(is_path_element_valid(loop_1.back()))
 		if get_signed_area_of_path(loop_1) < 0:
 			loop_1 = hack_reverse_loop(loop_1)
+		loop_1 = hack_consolidate_neighbors(loop_1)
 		assert(is_path_valid(loop_1))
 
 		# The other loop encorporates the entire outer_lines, except for the slice we took out
@@ -623,6 +630,9 @@ func complete_loop(x : int, y : int) -> void:
 	player_on_outer_lines = true
 
 func move_if_possible(x : int, y : int) -> bool: # returns true if we can continue calling this
+	if abs(player_pos.x - x) > 1 || abs(player_pos.y - y) > 1:
+		assert(false)
+		assert_color = true
 	if player_on_outer_lines:
 		if is_on_outer_line(x, y):
 			player_pos = Vector2i(x, y)
@@ -800,6 +810,8 @@ func _draw() -> void:
 
 	for rect : Rect2i in completed_rects:
 		var rect_color : Color = Color.YELLOW
+		if assert_color:
+			rect_color = Color.DEEP_PINK
 		draw_rect(Rect2(rect.position as Vector2 + offset, rect.size), rect_color)
 
 	for line : Array in outer_lines:
