@@ -8,12 +8,8 @@
 - mirror mode (swap sides of build, but keep player on the same y position
 - different icons for the player
 
-- advance after clearing % of the screen
-  + difficulty gets harder with each level cleared, but score keeps going up
-- better death screen
-  + death finally triggers meta-coin accumulation
+- death finally triggers meta-coin accumulation
 - tab where we can unlock different feature via meta-coin
 - tab where we can select which features we're using in the next game
-- display what each key does
 
 - Sounds
