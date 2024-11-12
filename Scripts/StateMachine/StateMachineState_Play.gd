@@ -38,6 +38,7 @@ var down_button : Button = null
 var right_button : Button = null
 var left_button : Button = null
 var draw_button : Button = null
+var score_value_label : Label = null
 
 func init_state(state_machine: StateMachine) -> void:
 	active_process_mode = self.process_mode
@@ -258,7 +259,8 @@ func create_both_loops() -> Array:
 	else:
 		# The player looped back onto the same line they started from, so the
 		# first loop is simple, we just close off the inner path to make it a loop.
-		loop_1.append([inner_lines.back()[1], inner_lines.front()[0]])
+		if inner_lines.back()[1] != inner_lines.front()[0]: # player could possibly loop exactly back to starting point on a corner
+			loop_1.append([inner_lines.back()[1], inner_lines.front()[0]])
 		assert(is_path_element_valid(loop_1.back()))
 		if get_signed_area_of_path(loop_1) < 0:
 			loop_1 = hack_reverse_loop(loop_1)
@@ -642,13 +644,36 @@ func move_if_possible(x : int, y : int) -> bool: # returns true if we can contin
 	player_pos = Vector2i(x, y)
 	return true
 
+var score : float = 0
+func update_score() -> void:
+	var frac : float = float(area_covered) / float(area_needed)
+	if frac > 1.0:
+		# We reward the player more for completing extra area
+		frac -= 1.0
+		frac *= 3.0
+		frac += 1.0
+	for i in range(0, difficulty_tier):
+		frac *= 1.1
+	
+	# base points is 1000
+	var old_score = score
+	score += (frac * 1000.0)
+	var tween = get_tree().create_tween()
+	tween.tween_method(set_score_label, old_score, score, 2).set_trans(Tween.TRANS_SINE)
+
+func set_score_label(value : float) -> void:
+	score_value_label.text = "%7.2f" % [round(value * 10) / 10.0]
+
 func switch_player_state(new_state : PlayerState) -> void:
 	if new_state == PlayerState.PLAYING:
+		if player_state == PlayerState.DEAD || player_state == PlayerState.UNINITIALIZED:
+			score = 0
 		player_state = new_state
 		resume_game()
 		return
 
 	if new_state == PlayerState.DEAD:
+		update_score()
 		game_state_label.text = "Game Over"
 		restart_label.text = "Play Again"
 		difficulty_tier += 0
@@ -659,6 +684,7 @@ func switch_player_state(new_state : PlayerState) -> void:
 		return
 		
 	if new_state == PlayerState.WON_PAUSE:
+		update_score()
 		game_state_label.text = "Nicely Done"
 		restart_label.text = "Continue"
 		difficulty_tier += 1
@@ -902,6 +928,7 @@ func init_game() -> void:
 	right_button = find_child("right_button") as Button
 	left_button = find_child("left_button") as Button
 	draw_button = find_child("draw_button") as Button
+	score_value_label = find_child("Score") as Label
 	
 	difficulty_tier = 0
 	play_field.hide() # TODO: Move the drawing code to a script running on the play_field
