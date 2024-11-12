@@ -4,6 +4,8 @@ class_name Enemy
 
 enum EnemyState {MOVING, HUNTING, TRAPPED, RESPAWNING}
 
+var difficulty_tier : int = 0
+var speed_mod : float = 1.0
 var pos_on_field : Vector2i
 var play_state : PlayState = null
 var goal_pos : Vector2i
@@ -19,12 +21,12 @@ var stun_remaining : float
 func change_state(new_state : EnemyState) -> void:
 	if new_state == EnemyState.RESPAWNING:
 		current_enemy_state = new_state
-		respawn_remaining = max_respawn_time
+		respawn_remaining = max_respawn_time * 10.0 / (10.0 + difficulty_tier)
 		pos_on_field = get_spawn_spot()
 		return
 	if new_state == EnemyState.TRAPPED:
 		current_enemy_state = new_state
-		stun_remaining = max_stun_time
+		stun_remaining = max_stun_time * 10.0 / (10.0 + difficulty_tier)
 		return
 	if new_state == EnemyState.MOVING:
 		assert(current_enemy_state != EnemyState.MOVING)
@@ -38,10 +40,13 @@ func change_state(new_state : EnemyState) -> void:
 		return
 	assert(false)
 	
-func init(ps : PlayState) -> void:
+func init(ps : PlayState, tier : int) -> void:
 	play_state = ps
+	difficulty_tier = tier
+	speed_mod = (10.0 + difficulty_tier) / 10.0
 	change_state(EnemyState.RESPAWNING)
 	chose_new_goal()
+	print("Enemy speed = %s" % [speed * speed_mod])
 
 func _process(delta: float) -> void:
 	if current_enemy_state == EnemyState.RESPAWNING:
@@ -73,7 +78,7 @@ func chose_new_goal() -> void:
 func get_new_pos(delta: float) -> Vector2i:
 	var new_pos : Vector2i = pos_on_field
 	var dir : Vector2 = (goal_pos - pos_on_field) as Vector2
-	move_work += dir.normalized() * delta * speed
+	move_work += dir.normalized() * delta * speed * speed_mod
 	if move_work.x >= 1:
 		new_pos.x += 1
 		move_work.x -= 1.0
@@ -124,8 +129,8 @@ func move_enemy(delta : float) -> void:
 		print("Enemy from %s to %s bounced off outer line" % [old_pos, pos_on_field])
 		move_work = Vector2.ZERO
 		chose_new_goal_and_state()
-	elif play_state.is_in_claimed_area(pos_on_field.x, pos_on_field.y, true):
-		print("Enemy from %s to %s on claimed spot %s" % [old_pos, pos_on_field, play_state.highlight_rect])
+	elif play_state.is_in_claimed_area(pos_on_field.x, pos_on_field.y):
+		print("Enemy from %s to %s on claimed spot" % [old_pos, pos_on_field])
 		change_state(EnemyState.TRAPPED)
 
 static func get_v2i_direction(v : Vector2i) -> Vector2i:
@@ -151,7 +156,7 @@ func get_spawn_spot() -> Vector2i:
 	while potential_spots < 10:
 		var x : int = rng.randi_range(0, int(play_state.play_field.size.x) - 1)
 		var y : int = rng.randi_range(0, int(play_state.play_field.size.y) - 1)
-		if !play_state.is_in_claimed_area(x, y, false):
+		if !play_state.is_in_claimed_area(x, y):
 			potential_spots += 1
 			var dist_squared = (Vector2i(x,y) - play_state.player_pos).length_squared()
 			if best_spot == null || dist_squared > best_dist:
@@ -166,10 +171,10 @@ func get_goal_spot() -> Vector2i:
 	while potential_spots < 10:
 		var x : int = rng.randi_range(0, int(play_state.play_field.size.x) - 1)
 		var y : int = rng.randi_range(0, int(play_state.play_field.size.y) - 1)
-		if play_state.is_in_claimed_area(x, y, false):
+		if play_state.is_in_claimed_area(x, y):
 			continue
 		var dir : Vector2i = get_v2i_direction(Vector2i(x,y) - pos_on_field)
-		if play_state.is_in_claimed_area(pos_on_field.x + dir.x, pos_on_field.y + dir.y, false):
+		if play_state.is_in_claimed_area(pos_on_field.x + dir.x, pos_on_field.y + dir.y):
 			continue
 		potential_spots += 1
 		if current_enemy_state == EnemyState.HUNTING:

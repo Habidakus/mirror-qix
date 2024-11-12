@@ -8,31 +8,53 @@ class_name PlayState
 @export var player_speed_inner : float = 100
 @export var player_speed_outer : float = 150
 
+enum PlayerState { UNINITIALIZED, PLAYING, DEAD, WON_PAUSE }
+var player_state : PlayerState = PlayerState.UNINITIALIZED
+
 var enemy : Enemy = null
 var fuze : Fuze = null
 var outer_lines : Array = []
 var inner_lines : Array = []
 var completed_rects : Array = []
-var score : int = 0
+#var score : int = 0
+var area_covered : int = 0
+var area_needed : int = 0
+var fraction_of_field_needed : float = 0.75
+var percent_covered : float = 0
+var percent_needed_to_win : float = 0
 var play_field : Control = null
 var score_label : Label = null
+var tab_container : TabContainer = null
+var tab_child_controls : Control = null
+var tab_child_play : Control = null
+var progress_bar : ProgressBar = null
 var player_pos : Vector2i
 var player_on_outer_lines : bool = true
+var game_state_label : Label = null
+var restart_label : Label = null
+var difficulty_tier : int = 0
+var up_button : Button = null
+var down_button : Button = null
+var right_button : Button = null
+var left_button : Button = null
+var draw_button : Button = null
 
 func init_state(state_machine: StateMachine) -> void:
 	active_process_mode = self.process_mode
 	our_state_machine = state_machine
+	player_state = PlayerState.UNINITIALIZED
 	self.process_mode = ProcessMode.PROCESS_MODE_DISABLED
 	self.hide()
 
 var player_movement : Vector2 = Vector2.ZERO
 func add_player_direction(dx : float, dy : float) -> void:
+	var tier_modifier : float = 10 / float(10 + difficulty_tier)
 	if player_on_outer_lines:
-		dx = dx * player_speed_outer
-		dy = dy * player_speed_outer
+		dx = dx * player_speed_outer * tier_modifier
+		dy = dy * player_speed_outer * tier_modifier
 	else:
-		dx = dx * player_speed_inner
-		dy = dy * player_speed_inner
+		dx = dx * player_speed_inner * tier_modifier
+		dy = dy * player_speed_inner * tier_modifier
 	if player_movement == Vector2.ZERO:
 		player_movement = Vector2(dx, dy)
 		return
@@ -568,8 +590,7 @@ func cleanup_path(path : Array) -> Array:
 			return retVal
 	return path
 
-func score_loop(score_inc : int, path : Array) -> void:
-	score += score_inc
+func score_loop(path : Array) -> void:
 	while path.size() > 4:
 		var p : Array = break_out_square(path)
 		path = p[1]
@@ -588,12 +609,14 @@ func complete_loop(x : int, y : int) -> void:
 	var loop_2_area : int = measure_area(two_loops[1])
 	#print("%s + %s = %s" % [loop_1_area, loop_2_area, loop_1_area + loop_2_area])
 	if loop_1_area < loop_2_area:
-		score_loop(loop_1_area, two_loops[0])
+		area_covered += loop_1_area
+		score_loop(two_loops[0])
 		outer_lines = two_loops[1]
 	else:
-		score_loop(loop_2_area, two_loops[1])
+		area_covered += loop_2_area
+		score_loop(two_loops[1])
 		outer_lines = two_loops[0]
-	score_label.text = str(round(score * 1000 / ((play_field.size.x - 1) * (play_field.size.y - 1))) / 10)
+	progress_bar.value = round(area_covered * 100.0 / float(area_needed))
 	inner_lines = []
 	player_on_outer_lines = true
 
@@ -619,7 +642,40 @@ func move_if_possible(x : int, y : int) -> bool: # returns true if we can contin
 	player_pos = Vector2i(x, y)
 	return true
 
+func switch_player_state(new_state : PlayerState) -> void:
+	if new_state == PlayerState.PLAYING:
+		player_state = new_state
+		resume_game()
+		return
+
+	if new_state == PlayerState.DEAD:
+		game_state_label.text = "Game Over"
+		restart_label.text = "Play Again"
+		difficulty_tier += 0
+		player_state = new_state
+		show_tab(tab_child_play)
+		hide_tab(tab_child_controls)
+		select_tab(tab_child_play, true)
+		return
+		
+	if new_state == PlayerState.WON_PAUSE:
+		game_state_label.text = "Nicely Done"
+		restart_label.text = "Continue"
+		difficulty_tier += 1
+		player_state = new_state
+		show_tab(tab_child_play)
+		hide_tab(tab_child_controls)
+		select_tab(tab_child_play, true)
+		return
+
 func _process(delta: float) -> void:
+	if player_state != PlayerState.PLAYING:
+		return
+		
+	if area_covered >= area_needed:
+		switch_player_state(PlayerState.WON_PAUSE)
+		return
+		
 	queue_redraw()
 	rotate_player += 5.0 * delta
 	process_player_input(delta)
@@ -633,7 +689,7 @@ func process_player_input(delta : float) -> void:
 		return
 	if process_outer_line_input(delta):
 		return
-	if Input.is_key_pressed(KEY_SPACE):
+	if Input.is_key_pressed(KEY_SPACE) || draw_button.button_pressed:
 		process_inner_path_start()
 
 func start_inner_path(x : int, y : int) -> void:
@@ -653,6 +709,9 @@ func start_inner_path(x : int, y : int) -> void:
 	]
 	if get_signed_area_of_path(triangle_of_intent_path) < 0: # neg is counter clockwise path
 		return
+	
+	if is_in_claimed_area(ix, iy):
+		return
 
 	if is_on_outer_line(ix, iy):
 		# player trying to jump off one line onto another? Shouldn't happen, but stop it
@@ -663,37 +722,37 @@ func start_inner_path(x : int, y : int) -> void:
 	player_pos = Vector2i(ix, iy)
 
 func process_inner_path_start() -> void:
-	if (Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S)):
+	if Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S) || down_button.button_pressed:
 		start_inner_path(0, 1);
-	elif (Input.is_key_pressed(KEY_UP) || Input.is_key_pressed(KEY_W)):
+	elif Input.is_key_pressed(KEY_UP) || Input.is_key_pressed(KEY_W) || up_button.button_pressed:
 		start_inner_path(0, -1);
-	elif (Input.is_key_pressed(KEY_RIGHT) || Input.is_key_pressed(KEY_D)):
+	elif Input.is_key_pressed(KEY_RIGHT) || Input.is_key_pressed(KEY_D) || right_button.button_pressed:
 		start_inner_path(1, 0);
-	elif (Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A)):
+	elif Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A) || left_button.button_pressed:
 		start_inner_path(-1, 0);
 	# else player is just holding down space but no direction - that's ok.
 
 func process_inner_line_input(delta : float) -> void:
-	if (Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S)): # && !is_direction_on_outer_line(0, 1):
+	if Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S) || down_button.button_pressed:
 		add_player_direction(0, delta)
-	elif (Input.is_key_pressed(KEY_UP) || Input.is_key_pressed(KEY_W)): # && !is_direction_on_outer_line(0, -1):
+	elif Input.is_key_pressed(KEY_UP) || Input.is_key_pressed(KEY_W) || up_button.button_pressed:
 		add_player_direction(0, -delta)
-	elif (Input.is_key_pressed(KEY_RIGHT) || Input.is_key_pressed(KEY_D)): # && !is_direction_on_outer_line(1, 0):
+	elif Input.is_key_pressed(KEY_RIGHT) || Input.is_key_pressed(KEY_D) || right_button.button_pressed:
 		add_player_direction(delta, 0)
-	elif (Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A)): # && !is_direction_on_outer_line(-1, 0):
+	elif Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A) || left_button.button_pressed:
 		add_player_direction(-delta, 0)
 	
 func process_outer_line_input(delta : float) -> bool:
-	if (Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S)) && is_direction_on_outer_line(0, 1):
+	if (Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S) || down_button.button_pressed) && is_direction_on_outer_line(0, 1):
 		add_player_direction(0, delta)
 		return true
-	elif (Input.is_key_pressed(KEY_UP) || Input.is_key_pressed(KEY_W)) && is_direction_on_outer_line(0, -1):
+	elif (Input.is_key_pressed(KEY_UP) || Input.is_key_pressed(KEY_W) || up_button.button_pressed) && is_direction_on_outer_line(0, -1):
 		add_player_direction(0, -delta)
 		return true
-	elif (Input.is_key_pressed(KEY_RIGHT) || Input.is_key_pressed(KEY_D)) && is_direction_on_outer_line(1, 0):
+	elif (Input.is_key_pressed(KEY_RIGHT) || Input.is_key_pressed(KEY_D) || right_button.button_pressed) && is_direction_on_outer_line(1, 0):
 		add_player_direction(delta, 0)
 		return true
-	elif (Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A)) && is_direction_on_outer_line(-1, 0):
+	elif (Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A) || left_button.button_pressed) && is_direction_on_outer_line(-1, 0):
 		add_player_direction(-delta, 0)
 		return true
 	return false
@@ -715,8 +774,6 @@ func _draw() -> void:
 
 	for rect : Rect2i in completed_rects:
 		var rect_color : Color = Color.YELLOW
-		if rect == highlight_rect:
-			rect_color = Color.ORCHID
 		draw_rect(Rect2(rect.position as Vector2 + offset, rect.size), rect_color)
 
 	for line : Array in outer_lines:
@@ -737,15 +794,12 @@ func _draw() -> void:
 	enemy.render(offset)
 	fuze.render(offset)
 
-var highlight_rect : Rect2i
-func is_in_claimed_area(x : int, y : int, highlight : bool) -> bool:
+func is_in_claimed_area(x : int, y : int) -> bool:
 	if x < 0 || y < 0 || x >= play_field.size.x || y >= play_field.size.y:
 		return true
 	for rect : Rect2i in completed_rects:
 		if x >= rect.position.x && x <= rect.end.x:
 			if y >= rect.position.y && y <= rect.end.y:
-				if highlight:
-					highlight_rect = rect
 				return true
 	return false
 
@@ -789,27 +843,70 @@ func point_opposite_player() -> Vector2i:
 	else:
 		return half_way_around_outer_line(inner_lines.front()[0])
 
-func init_game() -> void:
-	play_field = find_child("PlayField") as Control
-	score_label = find_child("Score") as Label
-	outer_lines = []
+func select_tab(control_child : Control, tab_bar_visible : bool) -> void:
+	var idx = tab_container.get_tab_idx_from_control(control_child)
+	tab_container.set_tab_hidden(idx, false)
+	tab_container.current_tab = idx;
+	tab_container.tabs_visible = tab_bar_visible
+
+func show_tab(control_child : Control) -> void:
+	var idx = tab_container.get_tab_idx_from_control(control_child)
+	tab_container.set_tab_hidden(idx, false)
+
+func hide_tab(control_child : Control) -> void:
+	var idx = tab_container.get_tab_idx_from_control(control_child)
+	tab_container.set_tab_hidden(idx, true)
+
+func resume_game() -> void:
+	select_tab(tab_child_controls, false)
+	
 	inner_lines = []
 	completed_rects = []
-	score = 0
-	player_on_outer_lines = true
+	outer_lines = []
+	
 	var pfs : Vector2i = Vector2i(int(play_field.size.x) - 1, int(play_field.size.y) - 1) 
 	add_line(Vector2i(0,0), Vector2i(pfs.x, 0))
 	add_line(Vector2i(pfs.x, 0), pfs)
 	add_line(pfs, Vector2i(0, pfs.y))
 	add_line(Vector2i(0, pfs.y), Vector2i(0,0))
-	play_field.hide() # TODO: Move the drawing code to a script running on the play_field
+	
+	progress_bar.value = 0
+	area_covered = 0
+	fraction_of_field_needed = 0.75
+	area_needed = int(round((play_field.size.x - 1) * (play_field.size.y - 1) * fraction_of_field_needed))
+	player_on_outer_lines = true
 	player_pos = Vector2(0, play_field.size.y / 2)
-	enemy = Enemy.new()
-	enemy.init(self)
-	add_child(enemy)
-	fuze = Fuze.new()
-	fuze.init(self)
-	add_child(fuze)
+	
+	if enemy == null:
+		enemy = Enemy.new()
+		add_child(enemy)
+	enemy.init(self, difficulty_tier)
+	
+	if fuze == null:
+		fuze = Fuze.new()
+		add_child(fuze)
+	fuze.init(self, difficulty_tier)
+	
+func init_game() -> void:
+	# Move these to _ready()
+	play_field = find_child("PlayField") as Control
+	score_label = find_child("Score") as Label
+	tab_container = find_child("TabContainer") as TabContainer
+	progress_bar = find_child("Progress") as ProgressBar
+	tab_child_controls = tab_container.find_child("Controls") as Control
+	tab_child_play = tab_container.find_child("Play") as Control
+	game_state_label = find_child("GameState") as Label
+	restart_label = find_child("RestartLabel") as Label
+	up_button = find_child("up_button") as Button
+	down_button = find_child("down_button") as Button
+	right_button = find_child("right_button") as Button
+	left_button = find_child("left_button") as Button
+	draw_button = find_child("draw_button") as Button
+	
+	difficulty_tier = 0
+	play_field.hide() # TODO: Move the drawing code to a script running on the play_field
+	
+	switch_player_state(PlayerState.PLAYING)
 
 func enter_state() -> void:
 	super.enter_state()
@@ -839,11 +936,7 @@ func _notification(what: int) -> void:
 		get_tree().quit()
 
 func on_player_death() -> void:
-	print("TODO: Implement better death handling")
-	leave_state("Menu")
+	switch_player_state(PlayerState.DEAD)
 
-func _on_quit_pressed() -> void:
-	get_tree().quit()
-
-func _on_menu_pressed() -> void:
-	leave_state("Menu")
+func _on_restart_button_up() -> void:
+	switch_player_state(PlayerState.PLAYING)

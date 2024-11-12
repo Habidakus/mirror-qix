@@ -2,6 +2,7 @@ extends Control
 
 class_name Fuze
 
+var difficulty_tier : float = 0
 var pos_on_field : Vector2i
 var play_state : PlayState = null
 var rotate : float = 0
@@ -11,15 +12,16 @@ var current_state : FuzeState
 
 enum FuzeState {MOVING, RESPAWNING}
 
-func init(ps : PlayState) -> void:
+func init(ps : PlayState, tier : int) -> void:
 	play_state = ps
+	difficulty_tier = tier
 	change_state(FuzeState.RESPAWNING)
 
 func change_state(new_state : FuzeState) -> void:
 	if new_state == FuzeState.RESPAWNING:
 		current_state = FuzeState.RESPAWNING
 		pos_on_field = play_state.point_opposite_player()
-		respawn_remaining = max_respawn_time
+		respawn_remaining = max_respawn_time * 5.0 / (5.0 + difficulty_tier)
 	else:
 		current_state = FuzeState.MOVING
 
