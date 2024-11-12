@@ -22,7 +22,7 @@ gdscript/warnings/unsafe_property_access=1
 [display]
 
 window/size/viewport_width=848
-window/size/resizable=false
+window/stretch/mode="viewport"
 
 [dotnet]
 
