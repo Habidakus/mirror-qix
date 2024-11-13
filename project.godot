@@ -21,7 +21,8 @@ gdscript/warnings/unsafe_property_access=1
 
 [display]
 
-window/size/viewport_width=948
+window/size/viewport_width=848
+window/size/viewport_height=600
 window/stretch/mode="viewport"
 
 [dotnet]

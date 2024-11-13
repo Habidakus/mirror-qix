@@ -442,7 +442,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="AspectRatioContainer" type="AspectRatioContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(600, 600)
+custom_minimum_size = Vector2(500, 500)
 layout_mode = 2
 size_flags_horizontal = 3
 
