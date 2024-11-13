@@ -46,7 +46,7 @@ func init(ps : PlayState, tier : int) -> void:
 	speed_mod = (10.0 + difficulty_tier) / 10.0
 	change_state(EnemyState.RESPAWNING)
 	chose_new_goal()
-	print("Enemy speed = %s" % [speed * speed_mod])
+	#print("Enemy speed = %s" % [speed * speed_mod])
 
 func _process(delta: float) -> void:
 	if current_enemy_state == EnemyState.RESPAWNING:
@@ -122,19 +122,24 @@ func move_enemy(delta : float) -> void:
 	pos_on_field = get_new_pos(delta)
 	if (old_pos - pos_on_field).length() > 2:
 		print("Enemy teleported")
+
+	if play_state.is_on_inner_line(pos_on_field.x, pos_on_field.y):
+		play_state.on_player_death()
+		return
 	
 	if pos_on_field == goal_pos:
 		chose_new_goal_and_state()
+
+	var on_outer_line : bool = play_state.is_on_outer_line(pos_on_field.x, pos_on_field.y)
+	if play_state.is_in_claimed_area(pos_on_field.x, pos_on_field.y):
+		#print("Enemy from %s to %s on claimed spot" % [old_pos, pos_on_field])
+		if !on_outer_line:
+			change_state(EnemyState.TRAPPED)
 	
-	if play_state.is_on_inner_line(pos_on_field.x, pos_on_field.y):
-		play_state.on_player_death()
-	elif play_state.is_on_outer_line(pos_on_field.x, pos_on_field.y):
-		print("Enemy from %s to %s bounced off outer line" % [old_pos, pos_on_field])
+	if on_outer_line && old_pos != pos_on_field:
 		move_work = Vector2.ZERO
 		chose_new_goal_and_state()
-	elif play_state.is_in_claimed_area(pos_on_field.x, pos_on_field.y):
-		print("Enemy from %s to %s on claimed spot" % [old_pos, pos_on_field])
-		change_state(EnemyState.TRAPPED)
+		print("Enemy from %s to %s bounced off outer line - new goal: %s" % [old_pos, pos_on_field, goal_pos])
 
 static func get_v2i_direction(v : Vector2i) -> Vector2i:
 	if v == Vector2i.ZERO:
@@ -174,10 +179,12 @@ func get_goal_spot() -> Vector2i:
 	while potential_spots < 10:
 		var x : int = rng.randi_range(0, int(play_state.play_field.size.x) - 1)
 		var y : int = rng.randi_range(0, int(play_state.play_field.size.y) - 1)
-		if play_state.is_in_claimed_area(x, y):
+		if play_state.is_in_claimed_area(x, y) || play_state.is_on_outer_line(x, y):
 			continue
 		var dir : Vector2i = get_v2i_direction(Vector2i(x,y) - pos_on_field)
-		if play_state.is_in_claimed_area(pos_on_field.x + dir.x, pos_on_field.y + dir.y):
+		var nx : int = pos_on_field.x + dir.x
+		var ny : int = pos_on_field.y + dir.y
+		if play_state.is_in_claimed_area(nx, ny) || play_state.is_on_outer_line(nx, ny):
 			continue
 		potential_spots += 1
 		if current_enemy_state == EnemyState.HUNTING:
