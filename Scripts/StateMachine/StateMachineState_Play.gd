@@ -126,7 +126,7 @@ func setup_config_tab() -> void:
 	tab_config_section.hide()
 	
 	if perk_unlock_eighty_percent_coverage:
-		coverage_option_button.show()
+		area_covered_config_section.show()
 		coverage_option_button.clear()
 		coverage_option_button.add_item("75%", 75)
 		coverage_option_button.add_item("80%% (score x%.2f)" % perk_multiple_eighty_percent_coverage, 80)
@@ -143,7 +143,7 @@ func setup_config_tab() -> void:
 		else:
 			coverage_option_button.selected = coverage_option_button.get_item_index(75)
 	else:
-		coverage_option_button.hide()
+		area_covered_config_section.hide()
 		
 func setup_unlock_tab() -> void:
 	var picking_disabled : bool = false
@@ -282,9 +282,12 @@ func add_player_direction(dx : float, dy : float) -> void:
 		# it was, replace stored movement with new movement
 		player_movement = Vector2(dx, dy)
 		return
-	if perk_inner_loop_protection != InnerLoopProtection.NONE && Enemy.get_v2i_direction(Vector2(dx, dy)) == player_forbidden_movement && !player_on_outer_lines:
-		player_movement = Vector2.ZERO
-		return
+	var dxy_direction : Vector2i = Enemy.get_v2i_direction_from_float(dx, dy)
+	if perk_inner_loop_protection != InnerLoopProtection.NONE && !player_on_outer_lines:
+		if player_forbidden_movement != Vector2i.ZERO && dxy_direction == player_forbidden_movement:
+			print("%s %s %s" % [Vector2(dx, dy), dxy_direction, player_forbidden_movement])
+			player_movement = Vector2.ZERO
+			return
 	if m.x < 0 || m.y < 0:
 		# if either m is negative, we've switched directions along an axis, so
 		# replace stored movement with new movement
@@ -292,7 +295,8 @@ func add_player_direction(dx : float, dy : float) -> void:
 		return
 	
 	player_movement += Vector2(dx, dy)
-	player_forbidden_movement = Enemy.get_v2i_direction(player_movement) * -1
+	player_forbidden_movement = dxy_direction * -1
+	print("setting fm = %s" % player_forbidden_movement)
 
 	var can_continue : bool = true
 	while can_continue:
@@ -864,7 +868,7 @@ func move_if_possible(x : int, y : int) -> bool: # returns true if we can contin
 		complete_loop(x, y)
 		return false
 	if is_on_inner_line(x, y):
-		if perk_inner_loop_protection != InnerLoopProtection.NONE:
+		if perk_inner_loop_protection != InnerLoopProtection.FULL:
 			on_player_death()
 		return false
 	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
@@ -1165,6 +1169,13 @@ func resume_game() -> void:
 		score_multiplier *= perk_multiple_stop_backtracking_inner_loop
 	for i in range(0, difficulty_tier):
 		score_multiplier *= 1.1
+	
+	if fraction_of_field_needed >= 0.9:
+		score_multiplier *= perk_multiple_ninety_percent_coverage
+	elif fraction_of_field_needed >= 0.85:
+		score_multiplier *= perk_multiple_eightyfive_percent_coverage
+	elif fraction_of_field_needed >= 0.8:
+		score_multiplier *= perk_multiple_eighty_percent_coverage
 		
 	(tab_child_controls.find_child("DifficultyTier") as Label).text = str(difficulty_tier + 1)
 	(tab_child_controls.find_child("ScoreMultiplier") as Label).text = "%.2f" % score_multiplier

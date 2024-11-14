@@ -141,6 +141,20 @@ func move_enemy(delta : float) -> void:
 		chose_new_goal_and_state()
 		print("Enemy from %s to %s bounced off outer line - new goal: %s" % [old_pos, pos_on_field, goal_pos])
 
+static func get_v2i_direction_from_float(x : float, y : float) -> Vector2i:
+	if x == 0 && y == 0:
+		return Vector2i.ZERO
+	if abs(x) > abs(y):
+		if x > 0:
+			return Vector2i(1, 0)
+		else:
+			return Vector2i(-1, 0)
+	else:
+		if y > 0:
+			return Vector2i(0, 1)
+		else:
+			return Vector2i(0, -1)
+			
 static func get_v2i_direction(v : Vector2i) -> Vector2i:
 	if v == Vector2i.ZERO:
 		return Vector2i.ZERO
