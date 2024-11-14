@@ -45,6 +45,7 @@ func move_fuze(delta : float) -> void:
 		var old_pos : Vector2i = pos_on_field
 		pos_on_field = get_new_pos()
 		if current_state == FuzeState.RESPAWNING:
+			play_state.play_fuze_respawn()
 			return
 
 		if (old_pos - pos_on_field).length() > 2:
@@ -73,6 +74,7 @@ func get_new_pos() -> Vector2i:
 
 	# The outer_line has been moved out from under us, teleport to opposite of player
 	change_state(FuzeState.RESPAWNING)
+	play_state.play_fuze_respawn()
 	return pos_on_field
 
 func render(offset : Vector2) -> void:

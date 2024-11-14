@@ -27,6 +27,7 @@ func change_state(new_state : EnemyState) -> void:
 	if new_state == EnemyState.TRAPPED:
 		current_enemy_state = new_state
 		stun_remaining = max_stun_time * 10.0 / (10.0 + difficulty_tier)
+		play_state.play_enemy_trapped()
 		return
 	if new_state == EnemyState.MOVING:
 		assert(current_enemy_state != EnemyState.MOVING)
@@ -61,6 +62,7 @@ func _process(delta: float) -> void:
 		stun_remaining -= delta
 		if stun_remaining <= 0:
 			change_state(EnemyState.RESPAWNING)
+			play_state.play_enemy_respawn()
 			return
 
 func chose_new_goal_and_state() -> void:

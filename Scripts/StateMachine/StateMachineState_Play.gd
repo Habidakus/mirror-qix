@@ -24,6 +24,12 @@ var area_needed : int = 0
 var fraction_of_field_needed : float = 0.75
 var percent_covered : float = 0
 var percent_needed_to_win : float = 0
+var player_travel_speaker : AudioStreamPlayer = null
+var player_event_speaker : AudioStreamPlayer = null
+var enemy_speaker : AudioStreamPlayer = null
+var fuze_speaker : AudioStreamPlayer = null
+var player_moving_pitch_scale : float = 2
+var player_stopped_pitch_scale : float = 1
 var play_field : Control = null
 var score_label : Label = null
 var tab_container : TabContainer = null
@@ -58,6 +64,13 @@ var coverage_option_button : OptionButton = null
 var cover_eighty_percent_button : Button = null
 var cover_eightyfive_percent_button : Button = null
 var cover_ninety_percent_button : Button = null
+
+var audio_stream_fuze_resurrection : AudioStream = preload("res://Sound/spawn_02.wav")
+var audio_stream_enemy_resurrection : AudioStream = preload("res://Sound/spawn_01.wav")
+var audio_stream_enemy_trapped : AudioStream = preload("res://Sound/powerup_03.wav")
+var audio_stream_player_death : AudioStream = preload("res://Sound/death_01.wav")
+var audio_stream_player_victory : AudioStream = preload("res://Sound/powerup_02.wav")
+var audio_stream_player_area_capture : AudioStream = preload("res://Sound/hit_01.wav")
 
 var unlocks_available : int = 0
 var points_until_next_unlock_credit : float = 1000
@@ -275,28 +288,31 @@ func add_player_direction(dx : float, dy : float) -> void:
 		dy = dy * player_speed_inner * tier_modifier
 	if player_movement == Vector2.ZERO:
 		player_movement = Vector2(dx, dy)
+		player_travel_speaker.set_pitch_scale(player_moving_pitch_scale)
 		return
 	var m : Vector2 = player_movement * Vector2(dx, dy)
 	if m == Vector2.ZERO:
 		# If m == 0,0 then we have switched our vector to perpendicular to what
 		# it was, replace stored movement with new movement
 		player_movement = Vector2(dx, dy)
+		player_travel_speaker.set_pitch_scale(player_moving_pitch_scale)
 		return
 	var dxy_direction : Vector2i = Enemy.get_v2i_direction_from_float(dx, dy)
 	if perk_inner_loop_protection != InnerLoopProtection.NONE && !player_on_outer_lines:
 		if player_forbidden_movement != Vector2i.ZERO && dxy_direction == player_forbidden_movement:
-			print("%s %s %s" % [Vector2(dx, dy), dxy_direction, player_forbidden_movement])
 			player_movement = Vector2.ZERO
+			player_travel_speaker.set_pitch_scale(player_stopped_pitch_scale)
 			return
 	if m.x < 0 || m.y < 0:
 		# if either m is negative, we've switched directions along an axis, so
 		# replace stored movement with new movement
 		player_movement = Vector2(dx, dy)
+		player_travel_speaker.set_pitch_scale(player_moving_pitch_scale)
 		return
 	
+	player_travel_speaker.set_pitch_scale(player_moving_pitch_scale)
 	player_movement += Vector2(dx, dy)
 	player_forbidden_movement = dxy_direction * -1
-	print("setting fm = %s" % player_forbidden_movement)
 
 	var can_continue : bool = true
 	while can_continue:
@@ -849,9 +865,11 @@ func complete_loop(x : int, y : int) -> void:
 		area_covered += loop_2_area
 		score_loop(two_loops[1])
 		outer_lines = two_loops[0]
+	play_player_area_capture()
 	progress_bar.value = round(area_covered * 100.0 / float(area_needed))
 	inner_lines = []
 	player_on_outer_lines = true
+	player_travel_speaker.stop()
 
 func move_if_possible(x : int, y : int) -> bool: # returns true if we can continue calling this
 	if abs(player_pos.x - x) > 1 || abs(player_pos.y - y) > 1:
@@ -926,6 +944,7 @@ func switch_player_state(new_state : PlayerState) -> void:
 		
 	if new_state == PlayerState.WON_PAUSE:
 		update_score()
+		play_player_victory()
 		game_state_label.text = "Nicely Done"
 		restart_label.text = "Continue"
 		difficulty_tier += 1
@@ -989,6 +1008,7 @@ func start_inner_path(x : int, y : int) -> void:
 	player_on_outer_lines = false
 	inner_lines.append([player_pos, Vector2i(ix, iy)])
 	player_pos = Vector2i(ix, iy)
+	player_travel_speaker.play()
 
 func process_inner_path_start() -> void:
 	if Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S) || down_button.button_pressed:
@@ -1010,6 +1030,8 @@ func process_inner_line_input(delta : float) -> void:
 		add_player_direction(delta, 0)
 	elif Input.is_key_pressed(KEY_LEFT) || Input.is_key_pressed(KEY_A) || left_button.button_pressed:
 		add_player_direction(-delta, 0)
+	else:
+		player_travel_speaker.set_pitch_scale(player_stopped_pitch_scale)
 	
 func process_outer_line_input(delta : float) -> bool:
 	if (Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S) || down_button.button_pressed) && is_direction_on_outer_line(0, 1):
@@ -1114,6 +1136,30 @@ func point_opposite_player() -> Vector2i:
 	else:
 		return half_way_around_outer_line(inner_lines.front()[0])
 
+func play_enemy_trapped() -> void:
+	enemy_speaker.stream = audio_stream_enemy_trapped
+	enemy_speaker.play()
+
+func play_enemy_respawn() -> void:
+	enemy_speaker.stream = audio_stream_enemy_resurrection
+	enemy_speaker.play()
+
+func play_fuze_respawn() -> void:
+	fuze_speaker.stream = audio_stream_fuze_resurrection
+	fuze_speaker.play()
+
+func play_player_death() -> void:
+	player_event_speaker.stream = audio_stream_player_death
+	player_event_speaker.play()
+
+func play_player_area_capture() -> void:
+	player_event_speaker.stream = audio_stream_player_area_capture
+	player_event_speaker.play()
+
+func play_player_victory() -> void:
+	player_event_speaker.stream = audio_stream_player_victory
+	player_event_speaker.play()
+
 func select_tab(control_child : Control, tab_bar_visible : bool) -> void:
 	var idx = tab_container.get_tab_idx_from_control(control_child)
 	tab_container.set_tab_hidden(idx, false)
@@ -1151,6 +1197,7 @@ func resume_game() -> void:
 	player_on_outer_lines = true
 	player_pos = Vector2(0, play_field.size.y / 2)
 	player_forbidden_movement = Vector2i.ZERO
+	player_travel_speaker.stop()
 	
 	if enemy == null:
 		enemy = Enemy.new()
@@ -1212,6 +1259,11 @@ func init_game() -> void:
 	cover_eighty_percent_button = tab_child_unlock.find_child("UnlockEightyPercent") as Button
 	cover_eightyfive_percent_button = tab_child_unlock.find_child("UnlockEightyFivePercent") as Button
 	cover_ninety_percent_button = tab_child_unlock.find_child("UnlockNinetyPercent") as Button
+	player_event_speaker = tab_child_controls.find_child("PlayerEventSpeaker") as AudioStreamPlayer
+	player_travel_speaker = tab_child_controls.find_child("PlayerTravelSpeaker") as AudioStreamPlayer
+	player_travel_speaker.pitch_scale = player_moving_pitch_scale
+	enemy_speaker = tab_child_controls.find_child("EnemySpeaker") as AudioStreamPlayer
+	fuze_speaker = tab_child_controls.find_child("FuzeSpeaker") as AudioStreamPlayer
 
 	build_protection_option_button.item_selected.connect(on_build_protection_option_button)
 	build_path_backup_button.pressed.connect(on_build_path_backup_button)
@@ -1224,6 +1276,8 @@ func init_game() -> void:
 	cover_eighty_percent_button.pressed.connect(on_cover_eighty_percent_button)
 	cover_eightyfive_percent_button.pressed.connect(on_cover_eightyfive_percent_button)
 	cover_ninety_percent_button.pressed.connect(on_cover_ninety_percent_button)
+	
+	#(player_travel_speaker.stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_PINGPONG
 	
 	difficulty_tier = 0
 	fraction_of_field_needed = 0.75
@@ -1260,6 +1314,8 @@ func _notification(what: int) -> void:
 
 func on_player_death() -> void:
 	switch_player_state(PlayerState.DEAD)
+	player_travel_speaker.stop()
+	play_player_death()
 
 func _on_restart_button_up() -> void:
 	switch_player_state(PlayerState.PLAYING)

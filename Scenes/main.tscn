@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://byexcr20v7axg"]
+[gd_scene load_steps=11 format=3 uid="uid://byexcr20v7axg"]
 
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachine.gd" id="1_srbky"]
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_AnyKeyToContinue.gd" id="2_4qlki"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://44pxrh1ctkak" path="res://Art/left_triangle.png" id="7_50vy4"]
 [ext_resource type="Texture2D" uid="uid://4lfljd6q5nqa" path="res://Art/right_triangle.png" id="8_utft1"]
 [ext_resource type="Texture2D" uid="uid://du8lyde75fgmk" path="res://Art/down_triangle.png" id="9_8hlwr"]
+[ext_resource type="AudioStream" uid="uid://b3rdypueyunf0" path="res://Sound/travel_02_loop.wav" id="10_icva5"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -131,6 +132,7 @@ script = ExtResource("4_w0rml")
 loads_after = NodePath("../../Button_Credits/ControlDecorator")
 
 [node name="Game" type="Control" parent="StateMachine"]
+clip_contents = true
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -379,6 +381,18 @@ vertical_alignment = 1
 [node name="Control2" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="PlayerTravelSpeaker" type="AudioStreamPlayer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
+stream = ExtResource("10_icva5")
+volume_db = -10.4
+pitch_scale = 0.53
+
+[node name="PlayerEventSpeaker" type="AudioStreamPlayer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
+
+[node name="EnemySpeaker" type="AudioStreamPlayer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
+volume_db = -10.0
+
+[node name="FuzeSpeaker" type="AudioStreamPlayer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
 
 [node name="Config" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer"]
 layout_mode = 2
