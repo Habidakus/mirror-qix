@@ -1,15 +1,10 @@
 - can/can't stop while building inner blocks
 - fuse on inner loop if you stop
-- toggle vulnerability in crossing over inner track
 - multiple build speeds - slower gets more point, slower for fewer points
 - faster enemy movement
 - faster enemy respawn
 - swarm enemy vs bounce enemy vs dwarves
 - mirror mode (swap sides of build, but keep player on the same y position
 - different icons for the player
-
-- death finally triggers meta-coin accumulation
-- tab where we can unlock different feature via meta-coin
-- tab where we can select which features we're using in the next game
-
+- multiple outer loop fuses
 - Sounds
