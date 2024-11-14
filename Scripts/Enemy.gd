@@ -80,24 +80,26 @@ func chose_new_goal() -> void:
 	move_work = Vector2.ZERO
 	goal_pos = get_goal_spot()
 
-func get_new_pos(delta: float) -> Vector2i:
-	var new_pos : Vector2i = pos_on_field
+func advance_movement_cursor(delta : float) -> void:
 	var dir : Vector2 = (goal_pos - pos_on_field) as Vector2
 	move_work += dir.normalized() * delta * speed * speed_mod
-	if move_work.x >= 1:
-		new_pos.x += 1
-		move_work.x -= 1.0
-	elif move_work.x <= -1:
-		new_pos.x -= 1
-		move_work.x += 1.0
-	if move_work.y >= 1:
-		new_pos.y += 1
-		move_work.y -= 1.0
-	elif move_work.y <= -1:
-		new_pos.y -= 1
-		move_work.y += 1.0
-	
-	return new_pos
+
+func get_new_pos_delta() -> Vector2i:
+	if abs(move_work.x) > abs(move_work.y):
+		if move_work.x >= 1:
+			move_work.x -= 1.0
+			return Vector2i(1, 0)
+		elif move_work.x <= -1:
+			move_work.x += 1.0
+			return Vector2i(-1, 0)
+	else:
+		if move_work.y >= 1:
+			move_work.y -= 1.0
+			return Vector2i(0, 1)
+		elif move_work.y <= -1:
+			move_work.y += 1.0
+			return Vector2i(0, -1)
+	return Vector2i.ZERO
 
 func render(offset : Vector2) -> void:
 	var loc : Vector2 = offset + (pos_on_field as Vector2)
@@ -120,31 +122,36 @@ func render(offset : Vector2) -> void:
 func move_enemy(delta : float) -> void:
 	if current_enemy_state == EnemyState.TRAPPED || current_enemy_state == EnemyState.RESPAWNING:
 		return
-	var old_pos : Vector2i = pos_on_field
 	
-	# TODO: iterate over get_new_pos until we've used up all the movement
-	#       get_new_pos should return a Vector2i with only one axis set to 1/-1
-	pos_on_field = get_new_pos(delta)
-	if (old_pos - pos_on_field).length() > 2:
-		print("Enemy teleported")
+	advance_movement_cursor(delta)
+	while true:
+		var movement_delta : Vector2i = get_new_pos_delta()
+		if movement_delta == Vector2i.ZERO:
+			return
+		
+		var old_pos : Vector2i = pos_on_field
+		pos_on_field = pos_on_field + movement_delta
 
-	if play_state.is_on_inner_line(pos_on_field.x, pos_on_field.y):
-		play_state.on_player_death()
-		return
+		if play_state.is_on_inner_line(pos_on_field.x, pos_on_field.y):
+			play_state.on_player_death()
+			return
 	
-	if pos_on_field == goal_pos:
-		chose_new_goal_and_state()
+		if pos_on_field == goal_pos:
+			chose_new_goal_and_state()
+			return
 
-	var on_outer_line : bool = play_state.is_on_outer_line(pos_on_field.x, pos_on_field.y)
-	if play_state.is_in_claimed_area(pos_on_field.x, pos_on_field.y):
-		#print("Enemy from %s to %s on claimed spot" % [old_pos, pos_on_field])
-		if !on_outer_line:
+		var on_outer_line : bool = play_state.is_on_outer_line(pos_on_field.x, pos_on_field.y)
+		if on_outer_line && old_pos != pos_on_field:
+			move_work = Vector2.ZERO
+			chose_new_goal_and_state()
+			print("Enemy from %s to %s bounced off outer line - new goal: %s" % [old_pos, pos_on_field, goal_pos])
+			return
+
+		if play_state.is_in_claimed_area(pos_on_field.x, pos_on_field.y):
+			#print("Enemy from %s to %s on claimed spot" % [old_pos, pos_on_field])
+			#if !on_outer_line:
 			change_state(EnemyState.TRAPPED)
-	
-	if on_outer_line && old_pos != pos_on_field:
-		move_work = Vector2.ZERO
-		chose_new_goal_and_state()
-		print("Enemy from %s to %s bounced off outer line - new goal: %s" % [old_pos, pos_on_field, goal_pos])
+			return
 
 static func get_v2i_direction_from_float(x : float, y : float) -> Vector2i:
 	if x == 0 && y == 0:
