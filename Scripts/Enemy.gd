@@ -176,6 +176,7 @@ func get_goal_spot() -> Vector2i:
 	var best_spot : Vector2i
 	var best_dist : int = 0
 	var potential_spots : int = 0
+	var currently_in_claimed_area : bool = play_state.is_in_claimed_area(pos_on_field.x, pos_on_field.y)
 	while potential_spots < 10:
 		var x : int = rng.randi_range(0, int(play_state.play_field.size.x) - 1)
 		var y : int = rng.randi_range(0, int(play_state.play_field.size.y) - 1)
@@ -184,8 +185,9 @@ func get_goal_spot() -> Vector2i:
 		var dir : Vector2i = get_v2i_direction(Vector2i(x,y) - pos_on_field)
 		var nx : int = pos_on_field.x + dir.x
 		var ny : int = pos_on_field.y + dir.y
-		if play_state.is_in_claimed_area(nx, ny) || play_state.is_on_outer_line(nx, ny):
-			continue
+		if !currently_in_claimed_area:
+			if play_state.is_in_claimed_area(nx, ny) || play_state.is_on_outer_line(nx, ny):
+				continue
 		potential_spots += 1
 		if current_enemy_state == EnemyState.HUNTING:
 			var dist_squared = (Vector2i(x,y) - play_state.player_pos).length_squared()
