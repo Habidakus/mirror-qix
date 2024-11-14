@@ -8,8 +8,14 @@ class_name PlayState
 @export var player_speed_inner : float = 100
 @export var player_speed_outer : float = 150
 
-enum PlayerState { UNINITIALIZED, PLAYING, DEAD, WON_PAUSE }
+enum PlayerState { UNINITIALIZED, PLAYING, DEAD, WON_PAUSE, MIRROR_MOVE }
 var player_state : PlayerState = PlayerState.UNINITIALIZED
+
+enum EnterButtonPower { MIRROR }
+var enter_button_power : EnterButtonPower = EnterButtonPower.MIRROR
+
+var mirror_state_cooldown_current : float = 0.0
+var mirror_state_cooldown_max : float = 0.75
 
 var assert_color : bool = false
 
@@ -39,6 +45,8 @@ var tab_child_config : Control = null
 var tab_child_unlock : Control = null
 var progress_bar : ProgressBar = null
 var player_pos : Vector2i
+var player_mirror_start_pos : Vector2i
+var player_mirror_end_pos : Vector2i
 var player_on_outer_lines : bool = true
 var game_state_label : Label = null
 var restart_label : Label = null
@@ -48,7 +56,9 @@ var up_button : Button = null
 var down_button : Button = null
 var right_button : Button = null
 var left_button : Button = null
-var draw_button : Button = null
+var space_bar_button : Button = null
+var enter_button_button : Button = null
+var enter_button_color_rect : ColorRect = null
 var score_value_label : Label = null
 var unlocks_available_label : Label = null
 var build_line_config_section : Control = null
@@ -71,6 +81,11 @@ var audio_stream_enemy_trapped : AudioStream = preload("res://Sound/powerup_03.w
 var audio_stream_player_death : AudioStream = preload("res://Sound/death_01.wav")
 var audio_stream_player_victory : AudioStream = preload("res://Sound/powerup_02.wav")
 var audio_stream_player_area_capture : AudioStream = preload("res://Sound/hit_01.wav")
+var audio_stream_player_mirror_board : AudioStream = preload("res://Sound/resurrection_04.wav")
+
+var enter_button_cooldown : float = 0
+var enter_button_max_cooldown : float = 10.0
+var mirror_power_cooldown : float = 10.0
 
 var unlocks_available : int = 0
 var points_until_next_unlock_credit : float = 1000
@@ -560,6 +575,7 @@ func create_both_loops() -> Array:
 
 func path_to_rect(path : Array) -> Rect2i:
 	return Rect2i(Vector2i(min(path[0][0].x, path[1][1].x), min(path[0][0].y, path[1][1].y)), Vector2i(abs(path[0][0].x - path[1][1].x), abs(path[0][0].y - path[1][1].y)))
+
 func rect_to_path(rect : Rect2i) -> Array:
 	return [
 		[rect.position, rect.position + Vector2i(rect.size.x, 0)],
@@ -779,13 +795,13 @@ func break_out_square(path : Array) -> Array: # square, then remaining path
 						elif j == prev:
 							continue
 						elif j == prevprev:
-							assert(new_loc_on_next != path[j][0])
-							shorter_path.append([path[j][0], new_loc_on_next])
-							assert(is_path_element_valid(shorter_path.back()))
+							if new_loc_on_next != path[j][0]:
+								shorter_path.append([path[j][0], new_loc_on_next])
+								assert(is_path_element_valid(shorter_path.back()))
 						elif j == next:
-							assert(new_loc_on_next != path[j][1])
-							shorter_path.append([new_loc_on_next, path[j][1]])
-							assert(is_path_element_valid(shorter_path.back()))
+							if new_loc_on_next != path[j][1]:
+								shorter_path.append([new_loc_on_next, path[j][1]])
+								assert(is_path_element_valid(shorter_path.back()))
 						else:
 							shorter_path.append(path[j])
 							assert(is_path_element_valid(shorter_path.back()))
@@ -802,13 +818,13 @@ func break_out_square(path : Array) -> Array: # square, then remaining path
 						elif j == next:
 							continue
 						elif j == nextnext:
-							assert(new_loc_on_prev != path[j][1])
-							shorter_path.append([new_loc_on_prev, path[j][1]])
-							assert(is_path_element_valid(shorter_path.back()))
+							if new_loc_on_prev != path[j][1]:
+								shorter_path.append([new_loc_on_prev, path[j][1]])
+								assert(is_path_element_valid(shorter_path.back()))
 						elif j == prev:
-							assert(new_loc_on_prev != path[j][0])
-							shorter_path.append([path[j][0], new_loc_on_prev])
-							assert(is_path_element_valid(shorter_path.back()))
+							if new_loc_on_prev != path[j][0]:
+								shorter_path.append([path[j][0], new_loc_on_prev])
+								assert(is_path_element_valid(shorter_path.back()))
 						else:
 							shorter_path.append(path[j])
 							assert(is_path_element_valid(shorter_path.back()))
@@ -928,8 +944,15 @@ func switch_player_state(new_state : PlayerState) -> void:
 	if new_state == PlayerState.PLAYING:
 		if player_state == PlayerState.DEAD || player_state == PlayerState.UNINITIALIZED:
 			score = 0
+		var start_new_level : bool = player_state != PlayerState.MIRROR_MOVE
 		player_state = new_state
-		resume_game()
+		if start_new_level:
+			resume_game()
+		return
+	
+	if new_state == PlayerState.MIRROR_MOVE:
+		player_state = new_state
+		trigger_mirror_power()
 		return
 
 	if new_state == PlayerState.DEAD:
@@ -961,17 +984,28 @@ func switch_player_state(new_state : PlayerState) -> void:
 
 func _process(delta: float) -> void:
 	if player_state != PlayerState.PLAYING:
+		if player_state == PlayerState.MIRROR_MOVE:
+			advance_mirroring(delta)
 		return
 		
 	if area_covered >= area_needed:
 		switch_player_state(PlayerState.WON_PAUSE)
 		return
-		
+	
+	if enter_button_cooldown > 0:
+		enter_button_cooldown -= delta
+		var r : float = 1.0 - (enter_button_cooldown / enter_button_max_cooldown)
+		enter_button_color_rect.color = Color(r / 2, r / 2, r / 2)
+		if enter_button_cooldown <= 0:
+			enter_button_color_rect.color = Color.WHITE
+			enter_button_button.disabled = false
+			
 	queue_redraw()
 	rotate_player += 5.0 * delta
 	process_player_input(delta)
-	enemy.move_enemy(delta)
-	fuze.move_fuze(delta)
+	if player_state == PlayerState.PLAYING:
+		enemy.move_enemy(delta)
+		fuze.move_fuze(delta)
 
 func process_player_input(delta : float) -> void:
 	if player_on_outer_lines == false:
@@ -980,8 +1014,12 @@ func process_player_input(delta : float) -> void:
 		return
 	if process_outer_line_input(delta):
 		return
-	if Input.is_key_pressed(KEY_SPACE) || draw_button.button_pressed:
+	if Input.is_key_pressed(KEY_SPACE) || space_bar_button.button_pressed:
 		process_inner_path_start()
+		return
+	if Input.is_key_pressed(KEY_TAB) || Input.is_key_pressed(KEY_ENTER) || enter_button_button.button_pressed:
+		process_enter_button()
+		return
 
 func start_inner_path(x : int, y : int) -> void:
 	assert(inner_lines.is_empty())
@@ -1012,6 +1050,74 @@ func start_inner_path(x : int, y : int) -> void:
 	inner_lines.append([player_pos, Vector2i(ix, iy)])
 	player_pos = Vector2i(ix, iy)
 	player_travel_speaker.play()
+
+func mirror_path(path : Array) -> Array:
+	var reverse_path : Array = []
+	for i in range(0, path.size()):
+		var j : int = path.size() - (i + 1)
+		reverse_path.append([mirror_v2i(path[j][1]), mirror_v2i(path[j][0])])
+		assert(is_path_element_valid(reverse_path.back()))
+	assert(is_path_valid(reverse_path))
+	return reverse_path
+
+func mirror_v2i(pos : Vector2i) -> Vector2i:
+	return Vector2i(int(play_field.size.x) - pos.x, pos.y)
+	
+func trigger_mirror_power() -> void:
+	# reverse all the paths
+	outer_lines = mirror_path(outer_lines)
+	
+	# reverse all the blocks
+	var reverse_completed_rects : Array = []
+	for rect in completed_rects:
+		var path : Array = rect_to_path(rect)
+		var mp : Array = mirror_path(path)
+		var mr : Rect2i = path_to_rect(mp)
+		reverse_completed_rects.append(mr)
+	completed_rects = reverse_completed_rects
+
+	# move the player and all enemies
+	enemy.set_pending_mirror_coordinates()
+	fuze.set_pending_mirror_coordinates()
+	player_mirror_start_pos = player_pos
+	player_mirror_end_pos = half_way_around_outer_line(mirror_v2i(player_pos))
+
+	# set cooldown
+	enter_button_max_cooldown = mirror_power_cooldown
+	enter_button_cooldown = mirror_power_cooldown
+	enter_button_button.disabled = true
+	enter_button_color_rect.color = Color.BLACK
+	
+	mirror_state_cooldown_current = mirror_state_cooldown_max
+	play_player_mirror()
+
+func advance_mirroring(delta: float) -> void:
+	mirror_state_cooldown_current -= delta
+
+	var remaining_fraction : float = mirror_state_cooldown_current / mirror_state_cooldown_max
+	if remaining_fraction < 0:
+		remaining_fraction = 0
+		
+	player_pos = Enemy.lerp_v2i(player_mirror_end_pos, player_mirror_start_pos, remaining_fraction)
+	enemy.set_mirror_pos(remaining_fraction)
+	fuze.set_mirror_pos(remaining_fraction)
+
+	queue_redraw()
+
+	if mirror_state_cooldown_current <= 0:
+		switch_player_state(PlayerState.PLAYING)
+
+func process_enter_button() -> void:
+	if player_state != PlayerState.PLAYING:
+		return
+	if enter_button_cooldown > 0:
+		return
+
+	if enter_button_power == EnterButtonPower.MIRROR:
+		if player_on_outer_lines:
+			switch_player_state(PlayerState.MIRROR_MOVE)
+	else:
+		assert(false, "Enter Button Power not implemented")
 
 func process_inner_path_start() -> void:
 	if Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S) || down_button.button_pressed:
@@ -1151,6 +1257,10 @@ func play_fuze_respawn() -> void:
 	fuze_speaker.stream = audio_stream_fuze_resurrection
 	fuze_speaker.play()
 
+func play_player_mirror() -> void:
+	player_event_speaker.stream = audio_stream_player_mirror_board
+	player_event_speaker.play()
+
 func play_player_death() -> void:
 	player_event_speaker.stream = audio_stream_player_death
 	player_event_speaker.play()
@@ -1246,7 +1356,9 @@ func init_game() -> void:
 	down_button = find_child("down_button") as Button
 	right_button = find_child("right_button") as Button
 	left_button = find_child("left_button") as Button
-	draw_button = find_child("draw_button") as Button
+	space_bar_button = find_child("SpaceBarButton") as Button
+	enter_button_button = find_child("EnterButtonButton") as Button
+	enter_button_color_rect = find_child("EnterButtonColorRect") as ColorRect
 	score_value_label = find_child("Score") as Label
 	unlocks_available_label = find_child("UnlocksAvailable") as Label
 	build_line_config_section = tab_child_config.find_child("BuildLineConfig")

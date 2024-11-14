@@ -7,6 +7,8 @@ enum EnemyState {MOVING, HUNTING, TRAPPED, RESPAWNING}
 var difficulty_tier : int = 0
 var speed_mod : float = 1.0
 var pos_on_field : Vector2i
+var mirror_start_pos : Vector2i
+var mirror_end_pos : Vector2i
 var play_state : PlayState = null
 var goal_pos : Vector2i
 var move_work : Vector2
@@ -17,6 +19,14 @@ var max_respawn_time : float = 2
 var respawn_remaining : float
 var max_stun_time : float = 3
 var stun_remaining : float
+
+func set_pending_mirror_coordinates() -> void:
+	mirror_start_pos = pos_on_field
+	mirror_end_pos = play_state.mirror_v2i(pos_on_field)
+	move_work = Vector2(-move_work.x, move_work.y)
+
+func set_mirror_pos(remaining_fraction : float) -> void:
+	pos_on_field = Enemy.lerp_v2i(mirror_end_pos, mirror_start_pos, remaining_fraction)
 
 func change_state(new_state : EnemyState) -> void:
 	if new_state == EnemyState.RESPAWNING:
@@ -130,7 +140,15 @@ func move_enemy(delta : float) -> void:
 			return
 		
 		var old_pos : Vector2i = pos_on_field
-		pos_on_field = pos_on_field + movement_delta
+		var was_on_outer_line : bool = play_state.is_on_outer_line(pos_on_field.x, pos_on_field.y)
+		var next_pos = pos_on_field + movement_delta
+		var will_be_on_outer_line : bool = play_state.is_on_outer_line(next_pos.x, next_pos.y)
+		var will_be_in_claimed_area : bool = play_state.is_in_claimed_area(next_pos.x, next_pos.y)
+		if was_on_outer_line && (will_be_on_outer_line || will_be_in_claimed_area):
+			chose_new_goal_and_state()
+			return
+
+		pos_on_field = next_pos
 
 		if play_state.is_on_inner_line(pos_on_field.x, pos_on_field.y):
 			play_state.on_player_death()
@@ -140,18 +158,22 @@ func move_enemy(delta : float) -> void:
 			chose_new_goal_and_state()
 			return
 
-		var on_outer_line : bool = play_state.is_on_outer_line(pos_on_field.x, pos_on_field.y)
-		if on_outer_line && old_pos != pos_on_field:
+		if will_be_on_outer_line: # && old_pos != pos_on_field:
 			move_work = Vector2.ZERO
 			chose_new_goal_and_state()
 			print("Enemy from %s to %s bounced off outer line - new goal: %s" % [old_pos, pos_on_field, goal_pos])
 			return
 
-		if play_state.is_in_claimed_area(pos_on_field.x, pos_on_field.y):
+		if will_be_in_claimed_area:
 			#print("Enemy from %s to %s on claimed spot" % [old_pos, pos_on_field])
 			#if !on_outer_line:
 			change_state(EnemyState.TRAPPED)
 			return
+
+static func lerp_v2i(start : Vector2i, end : Vector2i, frac : float) -> Vector2i:
+	var x : int = lerp(start.x, end.x, frac)
+	var y : int = lerp(start.y, end.y, frac)
+	return Vector2i(x, y)
 
 static func get_v2i_direction_from_float(x : float, y : float) -> Vector2i:
 	if x == 0 && y == 0:

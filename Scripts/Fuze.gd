@@ -4,6 +4,8 @@ class_name Fuze
 
 var difficulty_tier : float = 0
 var pos_on_field : Vector2i
+var mirror_start_pos : Vector2i
+var mirror_end_pos : Vector2i
 var play_state : PlayState = null
 var rotate : float = 0
 var max_respawn_time : float = 2
@@ -14,6 +16,13 @@ var speed : float = 100
 var speed_mod : float = 1
 
 enum FuzeState {MOVING, RESPAWNING}
+
+func set_pending_mirror_coordinates() -> void:
+	mirror_start_pos = pos_on_field
+	mirror_end_pos = play_state.mirror_v2i(pos_on_field)
+
+func set_mirror_pos(remaining_fraction : float) -> void:
+	pos_on_field = Enemy.lerp_v2i(mirror_end_pos, mirror_start_pos, remaining_fraction)
 
 func init(ps : PlayState, tier : int) -> void:
 	play_state = ps

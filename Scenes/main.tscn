@@ -160,10 +160,9 @@ theme_override_constants/separation = 10
 [node name="TabContainer" type="TabContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-current_tab = 1
+current_tab = 0
 
 [node name="Controls" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer"]
-visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -327,13 +326,6 @@ custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 20
-text = "Enable Build Mode:"
-horizontal_alignment = 1
-
 [node name="HBoxContainer2" type="HBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
 layout_mode = 2
 
@@ -341,7 +333,18 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="draw_button" type="Button" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2"]
+[node name="VBoxContainer" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2"]
+layout_mode = 2
+
+[node name="SpaceBarLabel" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 14
+text = "Enable Build Mode:"
+horizontal_alignment = 1
+
+[node name="SpaceBarButton" type="Button" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 3.0
@@ -353,9 +356,9 @@ theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 30
-text = "Space Bar"
+text = "S"
 
-[node name="ColorRect" type="ColorRect" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/draw_button"]
+[node name="ColorRect" type="ColorRect" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer/SpaceBarButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -364,7 +367,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 
-[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/draw_button/ColorRect"]
+[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer/SpaceBarButton/ColorRect"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -373,8 +376,60 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 14
 text = "Space Bar"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Control3" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2"]
+layout_mode = 2
+
+[node name="EnterButtonLabel" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer2"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 14
+text = "Mirror Board:"
+horizontal_alignment = 1
+
+[node name="EnterButtonButton" type="Button" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "E"
+
+[node name="EnterButtonColorRect" type="ColorRect" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer2/EnterButtonButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer2/EnterButtonButton/EnterButtonColorRect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 14
+text = "Enter Button"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -395,6 +450,7 @@ volume_db = -10.0
 [node name="FuzeSpeaker" type="AudioStreamPlayer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
 
 [node name="Config" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer"]
+visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
