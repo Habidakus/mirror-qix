@@ -8,3 +8,4 @@
 - different icons for the player
 - multiple outer loop fuses
 - Sounds
+- high score list
