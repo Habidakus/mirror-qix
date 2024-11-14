@@ -32,7 +32,6 @@ script = ExtResource("1_srbky")
 initial_state = NodePath("SplashScreen")
 
 [node name="SplashScreen" type="Control" parent="StateMachine" node_paths=PackedStringArray("next_state")]
-visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -50,6 +49,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -36.0
+offset_right = 36.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 10
@@ -61,9 +62,9 @@ theme_override_constants/margin_bottom = 10
 layout_mode = 2
 
 [node name="Label" type="Label" parent="StateMachine/SplashScreen/MarginContainer/CenterContainer"]
-custom_minimum_size = Vector2(900, 0)
+custom_minimum_size = Vector2(848, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 180
+theme_override_font_sizes/font_size = 150
 text = "Mirror Qix"
 horizontal_alignment = 1
 clip_text = true
@@ -156,9 +157,10 @@ theme_override_constants/separation = 10
 [node name="TabContainer" type="TabContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-current_tab = 0
+current_tab = 1
 
 [node name="Controls" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -166,11 +168,53 @@ size_flags_stretch_ratio = 20.0
 metadata/_tab_index = 0
 
 [node name="Control5" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
-custom_minimum_size = Vector2(0, 20)
+custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Label2" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
+[node name="HBoxContainer" type="HBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="Label2" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "Difficulty Tier:"
+horizontal_alignment = 1
+
+[node name="DifficultyTier" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "0"
+horizontal_alignment = 1
+
+[node name="Control" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer"]
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
+
+[node name="Label4" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "Multi: x"
+horizontal_alignment = 1
+
+[node name="ScoreMultiplier" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "1.0
+"
+horizontal_alignment = 1
+
+[node name="Control6" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label3" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
@@ -186,7 +230,7 @@ theme_override_constants/margin_right = 10
 layout_mode = 2
 
 [node name="Control3" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
-custom_minimum_size = Vector2(0, 20)
+custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -276,7 +320,7 @@ icon_alignment = 1
 layout_mode = 2
 
 [node name="Control4" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Controls"]
-custom_minimum_size = Vector2(0, 20)
+custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -336,28 +380,242 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="Config" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer"]
-visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="TBD" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config"]
+[node name="Control6" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
-size_flags_vertical = 3
-text = "(to be implemented)"
-horizontal_alignment = 1
-vertical_alignment = 1
+
+[node name="BuildLineConfig" type="MarginContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/BuildLineConfig"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/BuildLineConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Build line protections:
+"
+
+[node name="OptionButton" type="OptionButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/BuildLineConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+
+[node name="Control4" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="SpaceBarConfig" type="MarginContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/SpaceBarConfig"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/SpaceBarConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "SPACE BAR build speed:
+"
+
+[node name="DefaultBuildSpeedOptionButton" type="OptionButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/SpaceBarConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+
+[node name="Control5" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="TabConfig" type="MarginContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/TabConfig"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/TabConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "TAB Power:
+"
+
+[node name="OptionButton" type="OptionButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/TabConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+
+[node name="Control3" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="AreaCoverNeeded" type="MarginContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/AreaCoverNeeded"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/AreaCoverNeeded/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Area coverage needed to complete:
+"
+
+[node name="OptionButton" type="OptionButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config/AreaCoverNeeded/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+
+[node name="Control7" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Config"]
+visible = false
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
 
 [node name="Unlock" type="VBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="TBD" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+[node name="Control2" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
 layout_mode = 2
 size_flags_vertical = 3
-text = "(to be implemented)"
+
+[node name="Control7" type="HBoxContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="Control8" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock/Control7"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Unlocks Available:"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="UnlocksAvailable" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock/Control7"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Control3" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HSeparator" type="HSeparator" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Normally building stops if you are about
+to cross your own build path:"
+horizontal_alignment = 1
+
+[node name="UnlockBuildPathCrossing" type="CheckButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Player will die if they cross their build path
+x1.25 score multiple"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockBuildPathReversing" type="CheckButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Player will die if they reverse on build path
+x1.15 score multiple"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Areas are worth more if built
+using slower build speeds:"
+horizontal_alignment = 1
+
+[node name="UnlockSlowBuildMode" type="CheckButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Slow build mode"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockExtraSlowBuildMode" type="CheckButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Extra slow build mode"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockFastBuildMode" type="CheckButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Fast build mode"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockExtraFastBuildMode" type="CheckButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Extra fast build mode"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="HSeparator3" type="HSeparator" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+
+[node name="Label3" type="Label" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Amount of area covered before tier is complete:"
+horizontal_alignment = 1
+
+[node name="UnlockEightyPercent" type="CheckButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "80% -- x1.5 score multiple"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockEightyFivePercent" type="CheckButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "85% -- x2.0 score multiple"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockNinetyPercent" type="CheckButton" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "90% -- x2.75 score multiple"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="HSeparator4" type="HSeparator" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+
+[node name="Control" type="Control" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+size_flags_vertical = 3
 
 [node name="Play" type="CenterContainer" parent="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer"]
 visible = false

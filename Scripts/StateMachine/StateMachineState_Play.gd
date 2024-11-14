@@ -29,18 +29,232 @@ var score_label : Label = null
 var tab_container : TabContainer = null
 var tab_child_controls : Control = null
 var tab_child_play : Control = null
+var tab_child_config : Control = null
+var tab_child_unlock : Control = null
 var progress_bar : ProgressBar = null
 var player_pos : Vector2i
 var player_on_outer_lines : bool = true
 var game_state_label : Label = null
 var restart_label : Label = null
 var difficulty_tier : int = 0
+var score_multiplier : float = 1.0
 var up_button : Button = null
 var down_button : Button = null
 var right_button : Button = null
 var left_button : Button = null
 var draw_button : Button = null
 var score_value_label : Label = null
+var unlocks_available_label : Label = null
+var build_line_config_section : Control = null
+var build_protection_option_button : OptionButton = null
+var build_path_backup_button : Button = null
+var build_path_crossing_button : Button = null
+var build_speed_slow_button : Button = null
+var build_speed_very_slow_button : Button = null
+var build_speed_fast_button : Button = null
+var build_speed_very_fast_button : Button = null
+var area_covered_config_section : Control = null
+var coverage_option_button : OptionButton = null
+var cover_eighty_percent_button : Button = null
+var cover_eightyfive_percent_button : Button = null
+var cover_ninety_percent_button : Button = null
+
+var unlocks_available : int = 0
+var points_until_next_unlock_credit : float = 1000
+var increase_in_unlock_cost_per_unlock : float = 2.0
+# TODO: Organize these into sets of resources
+enum InnerLoopProtection { NONE, FULL, BACKUP }
+var perk_inner_loop_protection : InnerLoopProtection = InnerLoopProtection.FULL
+var perk_unlock_allow_backtracking_inner_loop : bool = false
+var perk_multiple_stop_backtracking_inner_loop : float = 1.15
+var perk_unlock_allow_crossing_inner_loop : bool = false
+var perk_multiple_no_inner_loop_protection : float = 1.25
+var perk_unlock_eighty_percent_coverage : bool = false
+var perk_multiple_eighty_percent_coverage : float = 1.5
+var perk_unlock_eightyfive_percent_coverage : bool = false
+var perk_multiple_eightyfive_percent_coverage : float = 2
+var perk_unlock_ninety_percent_coverage : bool = false
+var perk_multiple_ninety_percent_coverage : float = 2.75
+
+func are_any_unlocks_available() -> bool:
+	if unlocks_available == 0:
+		return false
+	if !perk_unlock_allow_backtracking_inner_loop:
+		return true
+	if !perk_unlock_allow_crossing_inner_loop:
+		return true
+	if !perk_unlock_eighty_percent_coverage || !perk_unlock_eightyfive_percent_coverage || !perk_unlock_ninety_percent_coverage:
+		return true
+	return false
+
+func are_any_configs_unlocked() -> bool:
+	if perk_unlock_allow_backtracking_inner_loop:
+		return true
+	if perk_unlock_allow_crossing_inner_loop:
+		return true
+	if perk_unlock_eighty_percent_coverage || perk_unlock_eightyfive_percent_coverage || perk_unlock_ninety_percent_coverage:
+		return true
+	return false
+	
+func setup_config_tab() -> void:
+	
+	if are_any_configs_unlocked():
+		show_tab(tab_child_config)
+	else:
+		hide_tab(tab_child_config)
+		return
+	
+	if perk_unlock_allow_backtracking_inner_loop || perk_unlock_allow_crossing_inner_loop:
+		build_line_config_section.show()
+		build_protection_option_button.clear()
+		build_protection_option_button.add_item("Full protections vs crossing build line", InnerLoopProtection.FULL)
+		if perk_inner_loop_protection == InnerLoopProtection.FULL:
+			build_protection_option_button.selected = build_protection_option_button.get_item_index(InnerLoopProtection.FULL)
+		if perk_unlock_allow_backtracking_inner_loop:
+			build_protection_option_button.add_item("Protection only against backing up", InnerLoopProtection.BACKUP)
+			if perk_inner_loop_protection == InnerLoopProtection.BACKUP:
+				build_protection_option_button.selected = build_protection_option_button.get_item_index(InnerLoopProtection.BACKUP)
+		if perk_unlock_allow_crossing_inner_loop:
+			build_protection_option_button.add_item("No protection against crossing build line", InnerLoopProtection.NONE)
+			if perk_inner_loop_protection == InnerLoopProtection.NONE:
+				build_protection_option_button.selected = build_protection_option_button.get_item_index(InnerLoopProtection.NONE)
+	else:
+		build_line_config_section.hide()
+	var space_bar_config_section : Control = tab_child_config.find_child("SpaceBarConfig")
+	space_bar_config_section.hide()
+	var tab_config_section : Control = tab_child_config.find_child("TabConfig")
+	tab_config_section.hide()
+	
+	if perk_unlock_eighty_percent_coverage:
+		coverage_option_button.show()
+		coverage_option_button.clear()
+		coverage_option_button.add_item("75%", 75)
+		coverage_option_button.add_item("80%% (score x%.2f)" % perk_multiple_eighty_percent_coverage, 80)
+		if perk_unlock_eightyfive_percent_coverage:
+			coverage_option_button.add_item("85%% (score x%.2f)" % perk_multiple_eightyfive_percent_coverage, 85)
+		if perk_unlock_ninety_percent_coverage:
+			coverage_option_button.add_item("90%% (score x%.2f)" % perk_multiple_ninety_percent_coverage, 90)
+		if fraction_of_field_needed >= 0.9:
+			coverage_option_button.selected = coverage_option_button.get_item_index(90)
+		elif fraction_of_field_needed >= 0.85:
+			coverage_option_button.selected = coverage_option_button.get_item_index(85)
+		elif fraction_of_field_needed >= 0.8:
+			coverage_option_button.selected = coverage_option_button.get_item_index(80)
+		else:
+			coverage_option_button.selected = coverage_option_button.get_item_index(75)
+	else:
+		coverage_option_button.hide()
+		
+func setup_unlock_tab() -> void:
+	var picking_disabled : bool = false
+	if are_any_unlocks_available():
+		show_tab(tab_child_unlock)
+	else:
+		if is_tab_currently_selected(tab_child_unlock):
+			picking_disabled = true
+		else:
+			hide_tab(tab_child_unlock)
+			return
+
+	unlocks_available_label.text = str(unlocks_available)
+	# Build Crossing Protection
+	if perk_unlock_allow_backtracking_inner_loop:
+		build_path_backup_button.button_pressed = true
+		build_path_backup_button.disabled = true
+	else:
+		build_path_backup_button.button_pressed = false
+		build_path_backup_button.disabled = picking_disabled
+	if perk_unlock_allow_crossing_inner_loop:
+		build_path_crossing_button.button_pressed = true
+		build_path_crossing_button.disabled = true
+	else:
+		build_path_crossing_button.button_pressed = false
+		build_path_crossing_button.disabled = picking_disabled
+		
+	# Build speed unlocks
+	build_speed_slow_button.button_pressed = false
+	build_speed_slow_button.disabled = true
+	build_speed_very_slow_button.button_pressed = false
+	build_speed_very_slow_button.disabled = true
+	build_speed_fast_button.button_pressed = false
+	build_speed_fast_button.disabled = true
+	build_speed_very_fast_button.button_pressed = false
+	build_speed_very_fast_button.disabled = true
+	
+	# coverage
+	if !perk_unlock_eighty_percent_coverage:
+		cover_eighty_percent_button.button_pressed = false
+		cover_eighty_percent_button.disabled = picking_disabled
+		cover_eightyfive_percent_button.hide()
+		cover_ninety_percent_button.hide()
+	elif !perk_unlock_eightyfive_percent_coverage:
+		cover_eighty_percent_button.button_pressed = true
+		cover_eighty_percent_button.disabled = true
+		cover_eightyfive_percent_button.show()
+		cover_eightyfive_percent_button.button_pressed = false
+		cover_eightyfive_percent_button.disabled = picking_disabled
+	elif !perk_unlock_ninety_percent_coverage:
+		cover_eighty_percent_button.hide()
+		cover_eightyfive_percent_button.button_pressed = true
+		cover_eightyfive_percent_button.disabled = true
+		cover_ninety_percent_button.show()
+		cover_ninety_percent_button.button_pressed = false
+		cover_ninety_percent_button.disabled = picking_disabled
+	else:
+		cover_eighty_percent_button.hide()
+		cover_eightyfive_percent_button.hide()
+		cover_ninety_percent_button.button_pressed = true
+		cover_ninety_percent_button.disabled = true
+
+func on_build_protection_option_button(index : int) -> void:
+	perk_inner_loop_protection = build_protection_option_button.get_item_id(index) as InnerLoopProtection
+
+func on_coverage_option_button(index : int) -> void:
+	fraction_of_field_needed = (coverage_option_button.get_item_id(index) as float) / 100.0
+
+func on_build_path_backup_button() -> void:
+	if perk_unlock_allow_backtracking_inner_loop == false:
+		perk_unlock_allow_backtracking_inner_loop = true
+		unlocks_available -= 1
+		setup_config_tab()
+		setup_unlock_tab()
+
+func on_build_path_crossing_button() -> void:
+	if perk_unlock_allow_crossing_inner_loop == false:
+		perk_unlock_allow_crossing_inner_loop = true
+		unlocks_available -= 1
+		setup_config_tab()
+		setup_unlock_tab()
+
+func on_cover_eighty_percent_button() -> void:
+	if perk_unlock_eighty_percent_coverage == false:
+		perk_unlock_eighty_percent_coverage = true
+		unlocks_available -= 1
+		setup_config_tab()
+		setup_unlock_tab()
+
+func on_cover_eightyfive_percent_button() -> void:
+	if perk_unlock_eightyfive_percent_coverage == false:
+		perk_unlock_eightyfive_percent_coverage = true
+		unlocks_available -= 1
+		setup_config_tab()
+		setup_unlock_tab()
+
+func on_cover_ninety_percent_button() -> void:
+	if perk_unlock_ninety_percent_coverage == false:
+		perk_unlock_ninety_percent_coverage = true
+		unlocks_available -= 1
+		setup_config_tab()
+		setup_unlock_tab()
+
+func on_build_slow_button() -> void:
+	pass
+func on_build_very_slow_button() -> void:
+	pass
+func on_build_fast_button() -> void:
+	pass
+func on_build_very_fast_button() -> void:
+	pass
 
 func init_state(state_machine: StateMachine) -> void:
 	active_process_mode = self.process_mode
@@ -50,6 +264,7 @@ func init_state(state_machine: StateMachine) -> void:
 	self.hide()
 
 var player_movement : Vector2 = Vector2.ZERO
+var player_forbidden_movement : Vector2i = Vector2.ZERO
 func add_player_direction(dx : float, dy : float) -> void:
 	var tier_modifier : float = 10 / float(10 + difficulty_tier)
 	if player_on_outer_lines:
@@ -67,6 +282,9 @@ func add_player_direction(dx : float, dy : float) -> void:
 		# it was, replace stored movement with new movement
 		player_movement = Vector2(dx, dy)
 		return
+	if perk_inner_loop_protection != InnerLoopProtection.NONE && Enemy.get_v2i_direction(Vector2(dx, dy)) == player_forbidden_movement && !player_on_outer_lines:
+		player_movement = Vector2.ZERO
+		return
 	if m.x < 0 || m.y < 0:
 		# if either m is negative, we've switched directions along an axis, so
 		# replace stored movement with new movement
@@ -74,6 +292,8 @@ func add_player_direction(dx : float, dy : float) -> void:
 		return
 	
 	player_movement += Vector2(dx, dy)
+	player_forbidden_movement = Enemy.get_v2i_direction(player_movement) * -1
+
 	var can_continue : bool = true
 	while can_continue:
 		if player_movement.x >= 1:
@@ -644,7 +864,8 @@ func move_if_possible(x : int, y : int) -> bool: # returns true if we can contin
 		complete_loop(x, y)
 		return false
 	if is_on_inner_line(x, y):
-		on_player_death()
+		if perk_inner_loop_protection != InnerLoopProtection.NONE:
+			on_player_death()
 		return false
 	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
 		inner_lines.back()[1] = Vector2i(x, y)
@@ -655,6 +876,7 @@ func move_if_possible(x : int, y : int) -> bool: # returns true if we can contin
 	return true
 
 var score : float = 0
+var unspent_score : float = 0
 func update_score() -> void:
 	var frac : float = float(area_covered) / float(area_needed)
 	if frac > 1.0:
@@ -662,12 +884,15 @@ func update_score() -> void:
 		frac -= 1.0
 		frac *= 3.0
 		frac += 1.0
-	for i in range(0, difficulty_tier):
-		frac *= 1.1
 	
 	# base points is 1000
 	var old_score = score
-	score += (frac * 1000.0)
+	score += (frac * 1000.0 * score_multiplier)
+	unspent_score += (frac * 1000.0 * score_multiplier)
+	while unspent_score >= points_until_next_unlock_credit:
+		unspent_score -= points_until_next_unlock_credit
+		points_until_next_unlock_credit *= increase_in_unlock_cost_per_unlock
+		unlocks_available += 1
 	var tween = get_tree().create_tween()
 	tween.tween_method(set_score_label, old_score, score, 2).set_trans(Tween.TRANS_SINE)
 
@@ -686,10 +911,12 @@ func switch_player_state(new_state : PlayerState) -> void:
 		update_score()
 		game_state_label.text = "Game Over"
 		restart_label.text = "Play Again"
-		difficulty_tier += 0
+		difficulty_tier = 0
 		player_state = new_state
 		show_tab(tab_child_play)
 		hide_tab(tab_child_controls)
+		setup_config_tab()
+		setup_unlock_tab()
 		select_tab(tab_child_play, true)
 		return
 		
@@ -701,6 +928,8 @@ func switch_player_state(new_state : PlayerState) -> void:
 		player_state = new_state
 		show_tab(tab_child_play)
 		hide_tab(tab_child_controls)
+		hide_tab(tab_child_config)
+		hide_tab(tab_child_unlock)
 		select_tab(tab_child_play, true)
 		return
 
@@ -887,6 +1116,10 @@ func select_tab(control_child : Control, tab_bar_visible : bool) -> void:
 	tab_container.current_tab = idx;
 	tab_container.tabs_visible = tab_bar_visible
 
+func is_tab_currently_selected(control_child : Control) -> bool:
+	var idx = tab_container.get_tab_idx_from_control(control_child)
+	return tab_container.current_tab == idx
+
 func show_tab(control_child : Control) -> void:
 	var idx = tab_container.get_tab_idx_from_control(control_child)
 	tab_container.set_tab_hidden(idx, false)
@@ -910,10 +1143,10 @@ func resume_game() -> void:
 	
 	progress_bar.value = 0
 	area_covered = 0
-	fraction_of_field_needed = 0.75
 	area_needed = int(round((play_field.size.x - 1) * (play_field.size.y - 1) * fraction_of_field_needed))
 	player_on_outer_lines = true
 	player_pos = Vector2(0, play_field.size.y / 2)
+	player_forbidden_movement = Vector2i.ZERO
 	
 	if enemy == null:
 		enemy = Enemy.new()
@@ -925,6 +1158,17 @@ func resume_game() -> void:
 		add_child(fuze)
 	fuze.init(self, difficulty_tier)
 	
+	score_multiplier = 1.0
+	if perk_inner_loop_protection == InnerLoopProtection.NONE:
+		score_multiplier *= perk_multiple_no_inner_loop_protection
+	elif perk_inner_loop_protection == InnerLoopProtection.BACKUP:
+		score_multiplier *= perk_multiple_stop_backtracking_inner_loop
+	for i in range(0, difficulty_tier):
+		score_multiplier *= 1.1
+		
+	(tab_child_controls.find_child("DifficultyTier") as Label).text = str(difficulty_tier + 1)
+	(tab_child_controls.find_child("ScoreMultiplier") as Label).text = "%.2f" % score_multiplier
+	
 func init_game() -> void:
 	# Move these to _ready()
 	play_field = find_child("PlayField") as Control
@@ -933,6 +1177,8 @@ func init_game() -> void:
 	progress_bar = find_child("Progress") as ProgressBar
 	tab_child_controls = tab_container.find_child("Controls") as Control
 	tab_child_play = tab_container.find_child("Play") as Control
+	tab_child_config = tab_container.find_child("Config") as Control
+	tab_child_unlock = tab_container.find_child("Unlock") as Control
 	game_state_label = find_child("GameState") as Label
 	restart_label = find_child("RestartLabel") as Label
 	up_button = find_child("up_button") as Button
@@ -941,8 +1187,35 @@ func init_game() -> void:
 	left_button = find_child("left_button") as Button
 	draw_button = find_child("draw_button") as Button
 	score_value_label = find_child("Score") as Label
+	unlocks_available_label = find_child("UnlocksAvailable") as Label
+	build_line_config_section = tab_child_config.find_child("BuildLineConfig")
+	build_protection_option_button = build_line_config_section.find_child("OptionButton")
+	build_path_backup_button = tab_child_unlock.find_child("UnlockBuildPathReversing") as Button
+	build_path_crossing_button = tab_child_unlock.find_child("UnlockBuildPathCrossing") as Button
+	build_speed_slow_button = tab_child_unlock.find_child("UnlockSlowBuildMode") as Button
+	build_speed_very_slow_button = tab_child_unlock.find_child("UnlockExtraSlowBuildMode") as Button
+	build_speed_fast_button = tab_child_unlock.find_child("UnlockFastBuildMode") as Button
+	build_speed_very_fast_button = tab_child_unlock.find_child("UnlockExtraFastBuildMode") as Button
+	area_covered_config_section = tab_child_config.find_child("AreaCoverNeeded")
+	coverage_option_button = area_covered_config_section.find_child("OptionButton")
+	cover_eighty_percent_button = tab_child_unlock.find_child("UnlockEightyPercent") as Button
+	cover_eightyfive_percent_button = tab_child_unlock.find_child("UnlockEightyFivePercent") as Button
+	cover_ninety_percent_button = tab_child_unlock.find_child("UnlockNinetyPercent") as Button
+
+	build_protection_option_button.item_selected.connect(on_build_protection_option_button)
+	build_path_backup_button.pressed.connect(on_build_path_backup_button)
+	build_path_crossing_button.pressed.connect(on_build_path_crossing_button)
+	build_speed_slow_button.pressed.connect(on_build_slow_button)
+	build_speed_very_slow_button.pressed.connect(on_build_very_slow_button)
+	build_speed_fast_button.pressed.connect(on_build_fast_button)
+	build_speed_very_fast_button.pressed.connect(on_build_very_fast_button)
+	coverage_option_button.item_selected.connect(on_coverage_option_button)
+	cover_eighty_percent_button.pressed.connect(on_cover_eighty_percent_button)
+	cover_eightyfive_percent_button.pressed.connect(on_cover_eightyfive_percent_button)
+	cover_ninety_percent_button.pressed.connect(on_cover_ninety_percent_button)
 	
 	difficulty_tier = 0
+	fraction_of_field_needed = 0.75
 	play_field.hide() # TODO: Move the drawing code to a script running on the play_field
 	
 	switch_player_state(PlayerState.PLAYING)
