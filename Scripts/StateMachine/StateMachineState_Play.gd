@@ -207,15 +207,18 @@ func setup_unlock_tab() -> void:
 		cover_eightyfive_percent_button.button_pressed = false
 		cover_eightyfive_percent_button.disabled = picking_disabled
 	elif !perk_unlock_ninety_percent_coverage:
-		cover_eighty_percent_button.hide()
+		cover_eighty_percent_button.button_pressed = true
+		cover_eighty_percent_button.disabled = true
 		cover_eightyfive_percent_button.button_pressed = true
 		cover_eightyfive_percent_button.disabled = true
 		cover_ninety_percent_button.show()
 		cover_ninety_percent_button.button_pressed = false
 		cover_ninety_percent_button.disabled = picking_disabled
 	else:
-		cover_eighty_percent_button.hide()
-		cover_eightyfive_percent_button.hide()
+		cover_eighty_percent_button.button_pressed = true
+		cover_eighty_percent_button.disabled = true
+		cover_eightyfive_percent_button.button_pressed = true
+		cover_eightyfive_percent_button.disabled = true
 		cover_ninety_percent_button.button_pressed = true
 		cover_ninety_percent_button.disabled = true
 

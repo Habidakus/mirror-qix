@@ -121,6 +121,9 @@ func move_enemy(delta : float) -> void:
 	if current_enemy_state == EnemyState.TRAPPED || current_enemy_state == EnemyState.RESPAWNING:
 		return
 	var old_pos : Vector2i = pos_on_field
+	
+	# TODO: iterate over get_new_pos until we've used up all the movement
+	#       get_new_pos should return a Vector2i with only one axis set to 1/-1
 	pos_on_field = get_new_pos(delta)
 	if (old_pos - pos_on_field).length() > 2:
 		print("Enemy teleported")
