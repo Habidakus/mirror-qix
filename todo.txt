@@ -8,3 +8,5 @@
 - multiple outer loop fuses
 - put together the high score list page
 - put together the credits page
+- unlocks and available unlock points should be persisted in user data
+- should show somewhere how close you are to unlocking your next unlock point
