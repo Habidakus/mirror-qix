@@ -10,3 +10,4 @@
 - put together the credits page
 - unlocks and available unlock points should be persisted in user data
 - should show somewhere how close you are to unlocking your next unlock point
+- add vfx at the start of the level to indicate where the player is
