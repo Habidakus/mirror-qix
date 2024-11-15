@@ -44,6 +44,9 @@ var tab_child_play : Control = null
 var tab_child_config : Control = null
 var tab_child_unlock : Control = null
 var progress_bar : ProgressBar = null
+var scoreboard_name_container : Container = null
+var scoreboard_name_line : LineEdit = null
+var scoreboard_name_submit : Button = null
 var player_pos : Vector2i
 var player_mirror_start_pos : Vector2i
 var player_mirror_end_pos : Vector2i
@@ -940,6 +943,43 @@ func update_score() -> void:
 func set_score_label(value : float) -> void:
 	score_value_label.text = "%7.2f" % [round(value * 10) / 10.0]
 
+var persistant_user_data : String = "user://qix_user_data.tres"
+func save_highscore() -> void:
+	if ResourceLoader.exists(persistant_user_data):
+		var user_data : UserData = ResourceLoader.load(persistant_user_data)
+		if !user_data.highscore_name.is_empty():
+			SilentWolf.Scores.save_score(user_data.highscore_name, score)
+			scoreboard_name_container.hide()
+			return
+	scoreboard_name_container.show()
+
+func on_scoreboard_name_submit() -> void:
+	var submitted_name : String = scoreboard_name_line.text
+	var valid_name : String = ""
+	for c : String in submitted_name:
+		var ascii : int = c.to_int()
+		var v = c
+		if ascii < 32 && ascii > 176:
+			v = "_"
+		elif ascii == 127:
+			v = "_"
+		elif ascii == 34 || ascii == 39 || ascii == 42 || ascii == 47 || ascii == 60 || ascii == 62 || ascii == 92: 
+			v = "_"
+		valid_name += v
+	
+	if valid_name.is_empty():
+		scoreboard_name_line.text = ""
+		return
+	
+	var user_data : UserData = UserData.new()
+	user_data.highscore_name = valid_name
+	var error : Error = ResourceSaver.save(user_data, persistant_user_data)
+	if error != Error.OK:
+		print("Failed to save %s: %s" % [persistant_user_data, error_string(error)])
+		return
+	scoreboard_name_container.hide()
+	save_highscore()
+
 func switch_player_state(new_state : PlayerState) -> void:
 	if new_state == PlayerState.PLAYING:
 		if player_state == PlayerState.DEAD || player_state == PlayerState.UNINITIALIZED:
@@ -959,12 +999,13 @@ func switch_player_state(new_state : PlayerState) -> void:
 		update_score()
 		game_state_label.text = "Game Over"
 		restart_label.text = "Play Again"
-		difficulty_tier = 0
 		player_state = new_state
 		show_tab(tab_child_play)
 		hide_tab(tab_child_controls)
 		setup_config_tab()
 		setup_unlock_tab()
+		save_highscore()
+		difficulty_tier = 0
 		select_tab(tab_child_play, true)
 		return
 		
@@ -975,6 +1016,7 @@ func switch_player_state(new_state : PlayerState) -> void:
 		restart_label.text = "Continue"
 		difficulty_tier += 1
 		player_state = new_state
+		scoreboard_name_container.hide()
 		show_tab(tab_child_play)
 		hide_tab(tab_child_controls)
 		hide_tab(tab_child_config)
@@ -1360,6 +1402,9 @@ func init_game() -> void:
 	enter_button_button = find_child("EnterButtonButton") as Button
 	enter_button_color_rect = find_child("EnterButtonColorRect") as ColorRect
 	score_value_label = find_child("Score") as Label
+	scoreboard_name_container = find_child("ScoreboardNameContainer") as Container
+	scoreboard_name_line = find_child("ScoreboardName") as LineEdit
+	scoreboard_name_submit = find_child("EnterNameButton") as Button
 	unlocks_available_label = find_child("UnlocksAvailable") as Label
 	build_line_config_section = tab_child_config.find_child("BuildLineConfig")
 	build_protection_option_button = build_line_config_section.find_child("OptionButton")
@@ -1391,6 +1436,7 @@ func init_game() -> void:
 	cover_eighty_percent_button.pressed.connect(on_cover_eighty_percent_button)
 	cover_eightyfive_percent_button.pressed.connect(on_cover_eightyfive_percent_button)
 	cover_ninety_percent_button.pressed.connect(on_cover_ninety_percent_button)
+	scoreboard_name_submit.pressed.connect(on_scoreboard_name_submit)
 	
 	#(player_travel_speaker.stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_PINGPONG
 	

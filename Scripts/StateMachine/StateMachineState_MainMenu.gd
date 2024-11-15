@@ -9,6 +9,17 @@ func init_state(state_machine: StateMachine) -> void:
 	our_state_machine = state_machine
 	self.process_mode = ProcessMode.PROCESS_MODE_DISABLED
 	self.hide()
+	
+	var sw_resource : String = "res://Resources/SilentWolfId.tres"
+	if ResourceLoader.exists(sw_resource):
+		var swid_data : SilentWolfId = ResourceLoader.load(sw_resource)
+		if !swid_data.api_key.is_empty():
+			SilentWolf.configure({
+				"api_key": swid_data.api_key,
+				"game_id": swid_data.game_id,
+				"log_level": 1
+			})
+		#SilentWolf.configure_scores({"open_scene_on_close": "res://scenes/MainPage.tscn"})
 
 func enter_state() -> void:
 	super.enter_state()
