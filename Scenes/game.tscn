@@ -1,0 +1,708 @@
+[gd_scene load_steps=8 format=3 uid="uid://tjx3dhrtasq8"]
+
+[ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_Play.gd" id="1_o6se3"]
+[ext_resource type="Texture2D" uid="uid://dqcqjav83kkvi" path="res://Art/up_triangle.png" id="2_nqpav"]
+[ext_resource type="Texture2D" uid="uid://44pxrh1ctkak" path="res://Art/left_triangle.png" id="3_jm7n7"]
+[ext_resource type="Texture2D" uid="uid://4lfljd6q5nqa" path="res://Art/right_triangle.png" id="4_6b26d"]
+[ext_resource type="Texture2D" uid="uid://du8lyde75fgmk" path="res://Art/down_triangle.png" id="5_m88xd"]
+[ext_resource type="AudioStream" uid="uid://b3rdypueyunf0" path="res://Sound/travel_02_loop.wav" id="6_ork13"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r4s7k"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+expand_margin_left = 4.0
+expand_margin_right = 4.0
+
+[node name="Game" type="Control"]
+clip_contents = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_o6se3")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TabContainer" type="TabContainer" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+current_tab = 3
+
+[node name="Controls" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+size_flags_stretch_ratio = 20.0
+metadata/_tab_index = 0
+
+[node name="Control5" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="Label2" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "Difficulty Tier:"
+horizontal_alignment = 1
+
+[node name="DifficultyTier" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "0"
+horizontal_alignment = 1
+
+[node name="Control" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer"]
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
+
+[node name="Label4" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "Multi: x"
+horizontal_alignment = 1
+
+[node name="ScoreMultiplier" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "1.0
+"
+horizontal_alignment = 1
+
+[node name="Control6" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label3" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "Progress:"
+horizontal_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+
+[node name="Progress" type="ProgressBar" parent="MarginContainer/HBoxContainer/TabContainer/Controls/MarginContainer"]
+layout_mode = 2
+
+[node name="Control3" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+layout_mode = 2
+columns = 3
+
+[node name="Control" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls/GridContainer"]
+layout_mode = 2
+
+[node name="up_button" type="Button" parent="MarginContainer/HBoxContainer/TabContainer/Controls/GridContainer"]
+layout_mode = 2
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "
+W"
+icon = ExtResource("2_nqpav")
+flat = true
+icon_alignment = 1
+
+[node name="Control2" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls/GridContainer"]
+layout_mode = 2
+
+[node name="left_button" type="Button" parent="MarginContainer/HBoxContainer/TabContainer/Controls/GridContainer"]
+layout_mode = 2
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "     A"
+icon = ExtResource("3_jm7n7")
+flat = true
+icon_alignment = 1
+
+[node name="Control3" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Controls/GridContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 32
+text = "Move"
+horizontal_alignment = 1
+
+[node name="right_button" type="Button" parent="MarginContainer/HBoxContainer/TabContainer/Controls/GridContainer"]
+layout_mode = 2
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "D      "
+icon = ExtResource("4_6b26d")
+flat = true
+icon_alignment = 1
+
+[node name="Control4" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls/GridContainer"]
+layout_mode = 2
+
+[node name="down_button" type="Button" parent="MarginContainer/HBoxContainer/TabContainer/Controls/GridContainer"]
+layout_mode = 2
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "S
+ "
+icon = ExtResource("5_m88xd")
+flat = true
+icon_alignment = 1
+
+[node name="Control5" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls/GridContainer"]
+layout_mode = 2
+
+[node name="Control4" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+layout_mode = 2
+
+[node name="Control" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2"]
+layout_mode = 2
+
+[node name="SpaceBarLabel" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 14
+text = "Enable Build Mode:"
+horizontal_alignment = 1
+
+[node name="SpaceBarButton" type="Button" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "S"
+
+[node name="ColorRect" type="ColorRect" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer/SpaceBarButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer/SpaceBarButton/ColorRect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 14
+text = "Space Bar"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Control3" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2"]
+layout_mode = 2
+
+[node name="EnterButtonLabel" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer2"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 14
+text = "Mirror Board:"
+horizontal_alignment = 1
+
+[node name="EnterButtonButton" type="Button" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "E"
+
+[node name="EnterButtonColorRect" type="ColorRect" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer2/EnterButtonButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2/VBoxContainer2/EnterButtonButton/EnterButtonColorRect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 14
+text = "Enter Button"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Control2" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Controls/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PlayerTravelSpeaker" type="AudioStreamPlayer" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+stream = ExtResource("6_ork13")
+volume_db = -10.4
+pitch_scale = 0.53
+
+[node name="PlayerEventSpeaker" type="AudioStreamPlayer" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+
+[node name="EnemySpeaker" type="AudioStreamPlayer" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+volume_db = -10.0
+
+[node name="FuzeSpeaker" type="AudioStreamPlayer" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
+
+[node name="Config" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="Control6" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="BuildLineConfig" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/BuildLineConfig"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Config/BuildLineConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Build line protections:
+"
+
+[node name="OptionButton" type="OptionButton" parent="MarginContainer/HBoxContainer/TabContainer/Config/BuildLineConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+
+[node name="Control4" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="SpaceBarConfig" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/SpaceBarConfig"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Config/SpaceBarConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "SPACE BAR build speed:
+"
+
+[node name="DefaultBuildSpeedOptionButton" type="OptionButton" parent="MarginContainer/HBoxContainer/TabContainer/Config/SpaceBarConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+
+[node name="Control5" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="TabConfig" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/TabConfig"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Config/TabConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "TAB Power:
+"
+
+[node name="OptionButton" type="OptionButton" parent="MarginContainer/HBoxContainer/TabContainer/Config/TabConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+
+[node name="Control3" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="AreaCoverNeeded" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/AreaCoverNeeded"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Config/AreaCoverNeeded/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Area coverage needed to complete:
+"
+
+[node name="OptionButton" type="OptionButton" parent="MarginContainer/HBoxContainer/TabContainer/Config/AreaCoverNeeded/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+
+[node name="Control7" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
+visible = false
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="Unlock" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="Control2" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Control7" type="HBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="Control8" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Unlock/Control7"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Unlocks Available:"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="UnlocksAvailable" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Unlock/Control7"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Control3" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Normally building stops if you are about
+to cross your own build path:"
+horizontal_alignment = 1
+
+[node name="UnlockBuildPathCrossing" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Player will die if they cross their build path
+x1.25 score multiple"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockBuildPathReversing" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Player will die if they reverse on build path
+x1.15 score multiple"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Areas are worth more if built
+using slower build speeds:"
+horizontal_alignment = 1
+
+[node name="UnlockSlowBuildMode" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Slow build mode"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockExtraSlowBuildMode" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Extra slow build mode"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockFastBuildMode" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Fast build mode"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockExtraFastBuildMode" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Extra fast build mode"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="HSeparator3" type="HSeparator" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+
+[node name="Label3" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Amount of area covered before tier is complete:"
+horizontal_alignment = 1
+
+[node name="UnlockEightyPercent" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "80% -- x1.5 score multiple"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockEightyFivePercent" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "85% -- x2.0 score multiple"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockNinetyPercent" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "90% -- x2.75 score multiple"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="HSeparator4" type="HSeparator" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+
+[node name="Control" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Play" type="CenterContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
+layout_mode = 2
+metadata/_tab_index = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Play"]
+layout_mode = 2
+
+[node name="ScoreboardNameContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/ScoreboardNameContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 15
+text = "Enter name for high score list:"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/ScoreboardNameContainer"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+
+[node name="ScoreboardName" type="LineEdit" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/ScoreboardNameContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_selected_color = Color(0.779291, 0.779291, 0.779291, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+clear_button_enabled = true
+
+[node name="Control" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/ScoreboardNameContainer/HBoxContainer"]
+custom_minimum_size = Vector2(5, 0)
+layout_mode = 2
+
+[node name="EnterNameButton" type="Button" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/ScoreboardNameContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/focus = SubResource("StyleBoxFlat_r4s7k")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_r4s7k")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_r4s7k")
+theme_override_styles/hover = SubResource("StyleBoxFlat_r4s7k")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_r4s7k")
+theme_override_styles/normal = SubResource("StyleBoxFlat_r4s7k")
+text = "Enter"
+
+[node name="Control2" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/ScoreboardNameContainer"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="GameState" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "Game Over"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer"]
+layout_mode = 2
+
+[node name="Control" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 36
+text = "Score:"
+
+[node name="Score" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 36
+text = "0"
+
+[node name="Control2" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Control" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="Restart" type="Button" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "Space Bar"
+
+[node name="ColorRect" type="ColorRect" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/Restart"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="RestartLabel" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/Restart/ColorRect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 1
+mouse_filter = 1
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "Play Again"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AspectRatioContainer" type="AspectRatioContainer" parent="MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(500, 500)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PlayField" type="ColorRect" parent="MarginContainer/HBoxContainer/AspectRatioContainer"]
+layout_mode = 2
+color = Color(0, 0, 0, 1)
+
+[connection signal="button_up" from="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/Restart" to="." method="_on_restart_button_up"]

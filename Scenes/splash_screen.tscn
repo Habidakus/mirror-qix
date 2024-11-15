@@ -1,0 +1,40 @@
+[gd_scene load_steps=2 format=3 uid="uid://dau303qc0rqdx"]
+
+[ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_AnyKeyToContinue.gd" id="1_sq4lf"]
+
+[node name="SplashScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sq4lf")
+time_out_in_seconds = 3.0
+fade_in = true
+fade_out = true
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -36.0
+offset_right = 36.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="CenterContainer" type="CenterContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/CenterContainer"]
+custom_minimum_size = Vector2(848, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 150
+text = "Mirror Qix"
+horizontal_alignment = 1
+clip_text = true

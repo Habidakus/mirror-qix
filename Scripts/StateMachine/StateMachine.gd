@@ -18,6 +18,7 @@ func register_state(state: StateMachineState) -> void:
 	state.init_state(self);
 	
 func switch_state_internal(state: StateMachineState) -> void:
+	print("Switching to state: %s" % state.name)
 	if current_state != null:
 		current_state.exit_state(state)
 	current_state = state
