@@ -78,6 +78,9 @@ var cover_eighty_percent_button : Button = null
 var cover_eightyfive_percent_button : Button = null
 var cover_ninety_percent_button : Button = null
 
+var persistant_user_data : String = "user://qix_user_data.tres"
+var user_data : UserData = null
+
 var audio_stream_fuze_resurrection : AudioStream = preload("res://Sound/spawn_02.wav")
 var audio_stream_enemy_resurrection : AudioStream = preload("res://Sound/spawn_01.wav")
 var audio_stream_enemy_trapped : AudioStream = preload("res://Sound/powerup_03.wav")
@@ -90,40 +93,33 @@ var enter_button_cooldown : float = 0
 var enter_button_max_cooldown : float = 10.0
 var mirror_power_cooldown : float = 10.0
 
-var unlocks_available : int = 0
-var points_until_next_unlock_credit : float = 1000
 var increase_in_unlock_cost_per_unlock : float = 2.0
 # TODO: Organize these into sets of resources
 enum InnerLoopProtection { NONE, FULL, BACKUP }
 var perk_inner_loop_protection : InnerLoopProtection = InnerLoopProtection.FULL
-var perk_unlock_allow_backtracking_inner_loop : bool = false
 var perk_multiple_stop_backtracking_inner_loop : float = 1.15
-var perk_unlock_allow_crossing_inner_loop : bool = false
 var perk_multiple_no_inner_loop_protection : float = 1.25
-var perk_unlock_eighty_percent_coverage : bool = false
 var perk_multiple_eighty_percent_coverage : float = 1.5
-var perk_unlock_eightyfive_percent_coverage : bool = false
 var perk_multiple_eightyfive_percent_coverage : float = 2
-var perk_unlock_ninety_percent_coverage : bool = false
 var perk_multiple_ninety_percent_coverage : float = 2.75
 
 func are_any_unlocks_available() -> bool:
-	if unlocks_available == 0:
+	if user_data.unlocks_available == 0:
 		return false
-	if !perk_unlock_allow_backtracking_inner_loop:
+	if !user_data.perk_unlock_allow_backtracking_inner_loop:
 		return true
-	if !perk_unlock_allow_crossing_inner_loop:
+	if !user_data.perk_unlock_allow_crossing_inner_loop:
 		return true
-	if !perk_unlock_eighty_percent_coverage || !perk_unlock_eightyfive_percent_coverage || !perk_unlock_ninety_percent_coverage:
+	if !user_data.perk_unlock_eighty_percent_coverage || !user_data.perk_unlock_eightyfive_percent_coverage || !user_data.perk_unlock_ninety_percent_coverage:
 		return true
 	return false
 
 func are_any_configs_unlocked() -> bool:
-	if perk_unlock_allow_backtracking_inner_loop:
+	if user_data.perk_unlock_allow_backtracking_inner_loop:
 		return true
-	if perk_unlock_allow_crossing_inner_loop:
+	if user_data.perk_unlock_allow_crossing_inner_loop:
 		return true
-	if perk_unlock_eighty_percent_coverage || perk_unlock_eightyfive_percent_coverage || perk_unlock_ninety_percent_coverage:
+	if user_data.perk_unlock_eighty_percent_coverage || user_data.perk_unlock_eightyfive_percent_coverage || user_data.perk_unlock_ninety_percent_coverage:
 		return true
 	return false
 	
@@ -135,17 +131,17 @@ func setup_config_tab() -> void:
 		hide_tab(tab_child_config)
 		return
 	
-	if perk_unlock_allow_backtracking_inner_loop || perk_unlock_allow_crossing_inner_loop:
+	if user_data.perk_unlock_allow_backtracking_inner_loop || user_data.perk_unlock_allow_crossing_inner_loop:
 		build_line_config_section.show()
 		build_protection_option_button.clear()
 		build_protection_option_button.add_item("Full protections vs crossing build line", InnerLoopProtection.FULL)
 		if perk_inner_loop_protection == InnerLoopProtection.FULL:
 			build_protection_option_button.selected = build_protection_option_button.get_item_index(InnerLoopProtection.FULL)
-		if perk_unlock_allow_backtracking_inner_loop:
+		if user_data.perk_unlock_allow_backtracking_inner_loop:
 			build_protection_option_button.add_item("Protection only against backing up", InnerLoopProtection.BACKUP)
 			if perk_inner_loop_protection == InnerLoopProtection.BACKUP:
 				build_protection_option_button.selected = build_protection_option_button.get_item_index(InnerLoopProtection.BACKUP)
-		if perk_unlock_allow_crossing_inner_loop:
+		if user_data.perk_unlock_allow_crossing_inner_loop:
 			build_protection_option_button.add_item("No protection against crossing build line", InnerLoopProtection.NONE)
 			if perk_inner_loop_protection == InnerLoopProtection.NONE:
 				build_protection_option_button.selected = build_protection_option_button.get_item_index(InnerLoopProtection.NONE)
@@ -156,14 +152,14 @@ func setup_config_tab() -> void:
 	var tab_config_section : Control = tab_child_config.find_child("TabConfig")
 	tab_config_section.hide()
 	
-	if perk_unlock_eighty_percent_coverage:
+	if user_data.perk_unlock_eighty_percent_coverage:
 		area_covered_config_section.show()
 		coverage_option_button.clear()
 		coverage_option_button.add_item("75%", 75)
 		coverage_option_button.add_item("80%% (score x%.2f)" % perk_multiple_eighty_percent_coverage, 80)
-		if perk_unlock_eightyfive_percent_coverage:
+		if user_data.perk_unlock_eightyfive_percent_coverage:
 			coverage_option_button.add_item("85%% (score x%.2f)" % perk_multiple_eightyfive_percent_coverage, 85)
-		if perk_unlock_ninety_percent_coverage:
+		if user_data.perk_unlock_ninety_percent_coverage:
 			coverage_option_button.add_item("90%% (score x%.2f)" % perk_multiple_ninety_percent_coverage, 90)
 		if fraction_of_field_needed >= 0.9:
 			coverage_option_button.selected = coverage_option_button.get_item_index(90)
@@ -187,15 +183,15 @@ func setup_unlock_tab() -> void:
 			hide_tab(tab_child_unlock)
 			return
 
-	unlocks_available_label.text = str(unlocks_available)
+	unlocks_available_label.text = str(user_data.unlocks_available)
 	# Build Crossing Protection
-	if perk_unlock_allow_backtracking_inner_loop:
+	if user_data.perk_unlock_allow_backtracking_inner_loop:
 		build_path_backup_button.button_pressed = true
 		build_path_backup_button.disabled = true
 	else:
 		build_path_backup_button.button_pressed = false
 		build_path_backup_button.disabled = picking_disabled
-	if perk_unlock_allow_crossing_inner_loop:
+	if user_data.perk_unlock_allow_crossing_inner_loop:
 		build_path_crossing_button.button_pressed = true
 		build_path_crossing_button.disabled = true
 	else:
@@ -213,18 +209,18 @@ func setup_unlock_tab() -> void:
 	build_speed_very_fast_button.disabled = true
 	
 	# coverage
-	if !perk_unlock_eighty_percent_coverage:
+	if !user_data.perk_unlock_eighty_percent_coverage:
 		cover_eighty_percent_button.button_pressed = false
 		cover_eighty_percent_button.disabled = picking_disabled
 		cover_eightyfive_percent_button.hide()
 		cover_ninety_percent_button.hide()
-	elif !perk_unlock_eightyfive_percent_coverage:
+	elif !user_data.perk_unlock_eightyfive_percent_coverage:
 		cover_eighty_percent_button.button_pressed = true
 		cover_eighty_percent_button.disabled = true
 		cover_eightyfive_percent_button.show()
 		cover_eightyfive_percent_button.button_pressed = false
 		cover_eightyfive_percent_button.disabled = picking_disabled
-	elif !perk_unlock_ninety_percent_coverage:
+	elif !user_data.perk_unlock_ninety_percent_coverage:
 		cover_eighty_percent_button.button_pressed = true
 		cover_eighty_percent_button.disabled = true
 		cover_eightyfive_percent_button.button_pressed = true
@@ -247,37 +243,42 @@ func on_coverage_option_button(index : int) -> void:
 	fraction_of_field_needed = (coverage_option_button.get_item_id(index) as float) / 100.0
 
 func on_build_path_backup_button() -> void:
-	if perk_unlock_allow_backtracking_inner_loop == false:
-		perk_unlock_allow_backtracking_inner_loop = true
-		unlocks_available -= 1
+	if user_data.perk_unlock_allow_backtracking_inner_loop == false:
+		user_data.perk_unlock_allow_backtracking_inner_loop = true
+		user_data.unlocks_available -= 1
+		save_user_data()
 		setup_config_tab()
 		setup_unlock_tab()
 
 func on_build_path_crossing_button() -> void:
-	if perk_unlock_allow_crossing_inner_loop == false:
-		perk_unlock_allow_crossing_inner_loop = true
-		unlocks_available -= 1
+	if user_data.perk_unlock_allow_crossing_inner_loop == false:
+		user_data.perk_unlock_allow_crossing_inner_loop = true
+		user_data.unlocks_available -= 1
+		save_user_data()
 		setup_config_tab()
 		setup_unlock_tab()
 
 func on_cover_eighty_percent_button() -> void:
-	if perk_unlock_eighty_percent_coverage == false:
-		perk_unlock_eighty_percent_coverage = true
-		unlocks_available -= 1
+	if user_data.perk_unlock_eighty_percent_coverage == false:
+		user_data.perk_unlock_eighty_percent_coverage = true
+		user_data.unlocks_available -= 1
+		save_user_data()
 		setup_config_tab()
 		setup_unlock_tab()
 
 func on_cover_eightyfive_percent_button() -> void:
-	if perk_unlock_eightyfive_percent_coverage == false:
-		perk_unlock_eightyfive_percent_coverage = true
-		unlocks_available -= 1
+	if user_data.perk_unlock_eightyfive_percent_coverage == false:
+		user_data.perk_unlock_eightyfive_percent_coverage = true
+		user_data.unlocks_available -= 1
+		save_user_data()
 		setup_config_tab()
 		setup_unlock_tab()
 
 func on_cover_ninety_percent_button() -> void:
-	if perk_unlock_ninety_percent_coverage == false:
-		perk_unlock_ninety_percent_coverage = true
-		unlocks_available -= 1
+	if user_data.perk_unlock_ninety_percent_coverage == false:
+		user_data.perk_unlock_ninety_percent_coverage = true
+		user_data.unlocks_available -= 1
+		save_user_data()
 		setup_config_tab()
 		setup_unlock_tab()
 
@@ -920,7 +921,6 @@ func move_if_possible(x : int, y : int) -> bool: # returns true if we can contin
 	return true
 
 var score : float = 0
-var unspent_score : float = 0
 func update_score() -> void:
 	var frac : float = float(area_covered) / float(area_needed)
 	if frac > 1.0:
@@ -932,25 +932,24 @@ func update_score() -> void:
 	# base points is 1000
 	var old_score = score
 	score += (frac * 1000.0 * score_multiplier)
-	unspent_score += (frac * 1000.0 * score_multiplier)
-	while unspent_score >= points_until_next_unlock_credit:
-		unspent_score -= points_until_next_unlock_credit
-		points_until_next_unlock_credit *= increase_in_unlock_cost_per_unlock
-		unlocks_available += 1
+	user_data.unspent_score += (frac * 1000.0 * score_multiplier)
+	while user_data.unspent_score >= user_data.points_until_next_unlock_credit:
+		user_data.unspent_score -= user_data.points_until_next_unlock_credit
+		user_data.points_until_next_unlock_credit *= increase_in_unlock_cost_per_unlock
+		user_data.unlocks_available += 1
+	save_user_data()
+	
 	var tween = get_tree().create_tween()
 	tween.tween_method(set_score_label, old_score, score, 2).set_trans(Tween.TRANS_SINE)
 
 func set_score_label(value : float) -> void:
 	score_value_label.text = "%7.2f" % [round(value * 10) / 10.0]
 
-var persistant_user_data : String = "user://qix_user_data.tres"
 func save_highscore() -> void:
-	if ResourceLoader.exists(persistant_user_data):
-		var user_data : UserData = ResourceLoader.load(persistant_user_data)
-		if !user_data.highscore_name.is_empty():
-			SilentWolf.Scores.save_score(user_data.highscore_name, score)
-			scoreboard_name_container.hide()
-			return
+	if !user_data.highscore_name.is_empty():
+		SilentWolf.Scores.save_score(user_data.highscore_name, score)
+		scoreboard_name_container.hide()
+		return
 	scoreboard_name_container.show()
 
 func on_scoreboard_name_submit() -> void:
@@ -971,14 +970,17 @@ func on_scoreboard_name_submit() -> void:
 		scoreboard_name_line.text = ""
 		return
 	
-	var user_data : UserData = UserData.new()
 	user_data.highscore_name = valid_name
+	if save_user_data():
+		scoreboard_name_container.hide()
+		save_highscore()
+
+func save_user_data() -> bool:
 	var error : Error = ResourceSaver.save(user_data, persistant_user_data)
 	if error != Error.OK:
 		print("Failed to save %s: %s" % [persistant_user_data, error_string(error)])
-		return
-	scoreboard_name_container.hide()
-	save_highscore()
+		return false
+	return true
 
 func switch_player_state(new_state : PlayerState) -> void:
 	if new_state == PlayerState.PLAYING:
@@ -1384,6 +1386,12 @@ func resume_game() -> void:
 	
 func init_game() -> void:
 	# Move these to _ready()
+	
+	if ResourceLoader.exists(persistant_user_data):
+		user_data = ResourceLoader.load(persistant_user_data)
+	else:
+		user_data = UserData.new()
+
 	play_field = find_child("PlayField") as Control
 	score_label = find_child("Score") as Label
 	tab_container = find_child("TabContainer") as TabContainer
