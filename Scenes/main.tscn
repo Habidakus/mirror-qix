@@ -130,6 +130,17 @@ text = "Credits
 script = ExtResource("4_w0rml")
 loads_after = NodePath("../../Button_Play/ControlDecorator")
 
+[node name="Button_Credits2" type="Button" parent="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 26
+text = "High Scores
+"
+
+[node name="ControlDecorator" type="Node" parent="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Credits2" node_paths=PackedStringArray("loads_after")]
+script = ExtResource("4_w0rml")
+loads_after = NodePath("../../Button_Play/ControlDecorator")
+
 [node name="Button_Quit" type="Button" parent="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -831,5 +842,6 @@ color = Color(0, 0, 0, 1)
 
 [connection signal="button_up" from="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Play" to="StateMachine/Menu" method="_on_play_pressed"]
 [connection signal="button_up" from="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Credits" to="StateMachine/Menu" method="_on_credits_pressed"]
+[connection signal="button_up" from="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Credits2" to="StateMachine/Menu" method="_on_credits_pressed"]
 [connection signal="button_up" from="StateMachine/Menu/MarginContainer/CenterContainer/VBoxContainer/Button_Quit" to="StateMachine/Menu" method="_on_quit_pressed"]
 [connection signal="button_up" from="StateMachine/Game/MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/Restart" to="StateMachine/Game" method="_on_restart_button_up"]

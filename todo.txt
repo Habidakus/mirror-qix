@@ -4,8 +4,7 @@
 - faster enemy movement
 - faster enemy respawn
 - swarm enemy vs bounce enemy vs dwarves
-- mirror mode (swap sides of build, but keep player on the same y position
 - different icons for the player
 - multiple outer loop fuses
-- Sounds
-- high score list
+- put together the high score list page
+- put together the credits page
