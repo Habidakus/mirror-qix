@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://byexcr20v7axg"]
+[gd_scene load_steps=7 format=3 uid="uid://byexcr20v7axg"]
 
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachine.gd" id="1_srbky"]
 [ext_resource type="PackedScene" uid="uid://dau303qc0rqdx" path="res://Scenes/splash_screen.tscn" id="2_xfvew"]
 [ext_resource type="PackedScene" uid="uid://cwrsudv7wrkrs" path="res://Scenes/menu.tscn" id="3_yptd7"]
 [ext_resource type="PackedScene" uid="uid://tjx3dhrtasq8" path="res://Scenes/game.tscn" id="4_jnww5"]
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_AnyKeyToContinue.gd" id="5_qycan"]
+[ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_HighScore.gd" id="6_q52r6"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -36,6 +37,7 @@ next_state = NodePath("../Menu")
 visible = false
 
 [node name="Credits" type="Control" parent="StateMachine" node_paths=PackedStringArray("next_state")]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -173,3 +175,33 @@ Godot 4
 Wavosaur
 rFXGen
 SilentWolf"
+
+[node name="HighScoreList" type="Control" parent="StateMachine"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("6_q52r6")
+fade_in = true
+fade_out = true
+
+[node name="MarginContainer" type="MarginContainer" parent="StateMachine/HighScoreList"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="HighScoreGrid" type="GridContainer" parent="StateMachine/HighScoreList/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/h_separation = 20
+columns = 2

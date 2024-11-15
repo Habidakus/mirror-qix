@@ -52,14 +52,14 @@ text = "Credits
 script = ExtResource("2_hhcic")
 loads_after = NodePath("../../Button_Play/ControlDecorator")
 
-[node name="Button_Credits2" type="Button" parent="MarginContainer/CenterContainer/VBoxContainer"]
+[node name="Button_HighScore" type="Button" parent="MarginContainer/CenterContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 26
 text = "High Scores
 "
 
-[node name="ControlDecorator" type="Node" parent="MarginContainer/CenterContainer/VBoxContainer/Button_Credits2" node_paths=PackedStringArray("loads_after")]
+[node name="ControlDecorator" type="Node" parent="MarginContainer/CenterContainer/VBoxContainer/Button_HighScore" node_paths=PackedStringArray("loads_after")]
 script = ExtResource("2_hhcic")
 loads_after = NodePath("../../Button_Play/ControlDecorator")
 
@@ -75,5 +75,5 @@ loads_after = NodePath("../../Button_Credits/ControlDecorator")
 
 [connection signal="button_up" from="MarginContainer/CenterContainer/VBoxContainer/Button_Play" to="." method="_on_play_pressed"]
 [connection signal="button_up" from="MarginContainer/CenterContainer/VBoxContainer/Button_Credits" to="." method="_on_credits_pressed"]
-[connection signal="button_up" from="MarginContainer/CenterContainer/VBoxContainer/Button_Credits2" to="." method="_on_credits_pressed"]
+[connection signal="button_up" from="MarginContainer/CenterContainer/VBoxContainer/Button_HighScore" to="." method="_on_high_score_pressed"]
 [connection signal="button_up" from="MarginContainer/CenterContainer/VBoxContainer/Button_Quit" to="." method="_on_quit_pressed"]

@@ -67,3 +67,6 @@ func _on_credits_pressed() -> void:
 
 func _on_play_pressed() -> void:
 	leave_state("Game")
+	
+func _on_high_score_pressed() -> void:
+	leave_state("HighScoreList")
