@@ -16,3 +16,11 @@
 - need to have red-pointer that shows where you start off in your first game
 - start with a more friendly enemy (or at least with more predictable travel path) and unlock more aggressive AI
 - green dot respawns tired, and speeds up as it recovers
+
+Tools:
+
+	Gimp
+	Godot 4
+	Wavosaur
+	rFXGen
+	SilentWolf
