@@ -24,8 +24,7 @@ var enemy : Enemy = null
 var fuze : Fuze = null
 var outer_lines : Array = []
 var inner_lines : Array = []
-# TODO: Replace array of Rect2i with a class that manages them, this way we can color them different too
-var completed_rects : Array = []
+var completed_rect_collection : RectCollection = RectCollection.new()
 var area_covered : int = 0
 var area_covered_modifier_because_of_speed : float = 0
 var area_needed : int = 0
@@ -950,13 +949,13 @@ func cleanup_path(path : Array) -> Array:
 			return retVal
 	return path
 
-func score_loop(path : Array) -> void:
+func score_loop(path : Array, draw_speed : float) -> void:
 	while path.size() > 4:
 		var p : Array = break_out_square(path)
 		path = p[1]
-		completed_rects.append(path_to_rect(p[0]))
+		completed_rect_collection.add_rect(path_to_rect(p[0]), draw_speed)
 	assert(path.size() == 4)
-	completed_rects.append(path_to_rect(path))
+	completed_rect_collection.add_rect(path_to_rect(path), draw_speed)
 
 func complete_loop(x : int, y : int) -> void:
 	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
@@ -970,16 +969,18 @@ func complete_loop(x : int, y : int) -> void:
 	#print("%s + %s = %s" % [loop_1_area, loop_2_area, loop_1_area + loop_2_area])
 	
 	var boost : float = get_enter_button_power_speed_multiple(enter_button_power)
+	if !enter_button_power_build_speed_on:
+		boost = 1
 	var boost_score_diff : float = 0
 	if loop_1_area < loop_2_area:
 		area_covered += loop_1_area
 		boost_score_diff = (loop_1_area) / boost - loop_1_area
-		score_loop(two_loops[0])
+		score_loop(two_loops[0], boost)
 		outer_lines = two_loops[1]
 	else:
 		area_covered += loop_2_area
 		boost_score_diff = (loop_2_area) / boost - loop_2_area
-		score_loop(two_loops[1])
+		score_loop(two_loops[1], boost)
 		outer_lines = two_loops[0]
 	play_player_area_capture()
 	progress_bar.value = round(area_covered * 100.0 / float(area_needed))
@@ -1207,13 +1208,7 @@ func trigger_mirror_power() -> void:
 	outer_lines = mirror_path(outer_lines)
 	
 	# reverse all the blocks
-	var reverse_completed_rects : Array = []
-	for rect in completed_rects:
-		var path : Array = rect_to_path(rect)
-		var mp : Array = mirror_path(path)
-		var mr : Rect2i = path_to_rect(mp)
-		reverse_completed_rects.append(mr)
-	completed_rects = reverse_completed_rects
+	completed_rect_collection.mirror(self)
 
 	# move the player and all enemies
 	enemy.set_pending_mirror_coordinates()
@@ -1352,11 +1347,7 @@ func _draw() -> void:
 		
 	var offset : Vector2 = play_field.global_position - self.global_position
 
-	for rect : Rect2i in completed_rects:
-		var rect_color : Color = Color.YELLOW
-		if assert_color:
-			rect_color = Color.DEEP_PINK
-		draw_rect(Rect2(rect.position as Vector2 + offset, rect.size), rect_color)
+	completed_rect_collection.render(self, offset)
 
 	for line : Array in outer_lines:
 		draw_line(offset + (line[0] as Vector2), offset + (line[1] as Vector2), Color.WHITE)
@@ -1379,11 +1370,7 @@ func _draw() -> void:
 func is_in_claimed_area(x : int, y : int) -> bool:
 	if x < 0 || y < 0 || x >= play_field.size.x || y >= play_field.size.y:
 		return true
-	for rect : Rect2i in completed_rects:
-		if x >= rect.position.x && x <= rect.end.x:
-			if y >= rect.position.y && y <= rect.end.y:
-				return true
-	return false
+	return completed_rect_collection.contains(x, y)
 
 #var rng : RandomNumberGenerator = RandomNumberGenerator.new()
 	
@@ -1475,8 +1462,8 @@ func resume_game() -> void:
 	select_tab(tab_child_controls, false)
 	
 	inner_lines = []
-	completed_rects = []
 	outer_lines = []
+	completed_rect_collection.clear()
 	
 	if enter_button_power_build_speed_on:
 		toggle_build_speed(enter_button_power)
