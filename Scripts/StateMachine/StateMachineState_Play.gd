@@ -1294,6 +1294,7 @@ func advance_mirroring(delta: float) -> void:
 		remaining_fraction = 0
 		
 	player_pos = Enemy.lerp_v2i(player_mirror_end_pos, player_mirror_start_pos, remaining_fraction)
+	completed_rect_collection.set_mirror_pos(remaining_fraction)
 	enemy.set_mirror_pos(remaining_fraction)
 	fuze.set_mirror_pos(remaining_fraction)
 
