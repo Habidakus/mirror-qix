@@ -1,0 +1,68 @@
+[gd_scene load_steps=2 format=3 uid="uid://dhra4s8xtlylp"]
+
+[ext_resource type="Script" path="res://Scripts/TutorialDialog.gd" id="1_5od5v"]
+
+[node name="Control" type="PanelContainer"]
+offset_right = 228.0
+offset_bottom = 75.0
+script = ExtResource("1_5od5v")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Line2D" type="Line2D" parent="MarginContainer"]
+points = PackedVector2Array(-10, -10, 20, 20)
+width = 2.0
+default_color = Color(1, 0, 0, 1)
+
+[node name="ColorRect2" type="ColorRect" parent="MarginContainer"]
+layout_mode = 2
+color = Color(1, 0, 0, 1)
+
+[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="ColorRect" type="ColorRect" parent="MarginContainer/MarginContainer2"]
+layout_mode = 2
+
+[node name="MarginContainer3" type="MarginContainer" parent="MarginContainer/MarginContainer2"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/MarginContainer2/MarginContainer3"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/MarginContainer2/MarginContainer3/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Lots of various text goes here
+and
+we talk about things"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/MarginContainer2/MarginContainer3/VBoxContainer"]
+layout_mode = 2
+
+[node name="Control2" type="Control" parent="MarginContainer/MarginContainer2/MarginContainer3/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Button" type="Button" parent="MarginContainer/MarginContainer2/MarginContainer3/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "Dismiss"
+
+[node name="Control" type="Control" parent="MarginContainer/MarginContainer2/MarginContainer3/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3

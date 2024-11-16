@@ -20,3 +20,7 @@ class_name UserData
 @export var perk_unlock_allow_very_fast_build : bool = false
 
 @export var perk_unlock_two_border_fuzes : bool = false
+
+@export var tutorial_config_tab_appears : bool = false
+@export var tutorial_unlock_tab_appears : bool = false
+@export var tutorial_switch_back_to_play_tab : bool = false

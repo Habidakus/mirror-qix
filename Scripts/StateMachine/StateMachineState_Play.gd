@@ -138,11 +138,26 @@ func are_any_configs_unlocked() -> bool:
 	if user_data.perk_unlock_allow_slow_build || user_data.perk_unlock_allow_very_slow_build || user_data.perk_unlock_allow_fast_build || user_data.perk_unlock_allow_very_fast_build:
 		return true
 	return false
+
+var tutorial_packed_scene : PackedScene = preload("res://Scenes/tutorial.tscn")
+
+func dismiss_tutorial_control_tab_appears() -> void:
+	user_data.tutorial_config_tab_appears = true
+
+func get_global_pos_of_center_of_tab(control : Control) -> Vector2:
+	var tab_bar = tab_container.get_tab_bar()
+	var index = tab_container.get_tab_idx_from_control(control)
+	var tab_rect : Rect2 = tab_bar.get_tab_rect(index)
+	return tab_bar.global_position + tab_rect.position + tab_rect.size / 2
 	
 func setup_config_tab() -> void:
-	
 	if are_any_configs_unlocked():
 		show_tab(tab_child_config)
+		if user_data.tutorial_config_tab_appears == false:
+			var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+			var pos : Vector2 = get_global_pos_of_center_of_tab(tab_child_config)
+			tutorial.init_to_lower_right("Open the config menu to select interesting\nhandicaps for your next game. The harder the\nhandicap, the greater your score will increase.", pos, dismiss_tutorial_control_tab_appears)
+			add_child(tutorial)
 	else:
 		hide_tab(tab_child_config)
 		return
@@ -211,11 +226,19 @@ func setup_config_tab() -> void:
 			coverage_option_button.selected = coverage_option_button.get_item_index(75)
 	else:
 		area_covered_config_section.hide()
-		
+
+func dismiss_tutorial_unlock_tab_appears() -> void:
+	user_data.tutorial_unlock_tab_appears = true
+
 func setup_unlock_tab() -> void:
 	var picking_disabled : bool = false
 	if are_any_unlocks_available():
 		show_tab(tab_child_unlock)
+		if user_data.tutorial_unlock_tab_appears == false:
+			var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+			var pos : Vector2 = get_global_pos_of_center_of_tab(tab_child_unlock)
+			tutorial.init_to_lower_right("You've earned enough points to\nunlock handicaps. Playing with\na handicap is a little harder,\nbut your score increases faster.", pos, dismiss_tutorial_unlock_tab_appears)
+			add_child(tutorial)
 	else:
 		if is_tab_currently_selected(tab_child_unlock):
 			picking_disabled = true
@@ -1667,3 +1690,15 @@ func on_player_death() -> void:
 
 func _on_restart_button_up() -> void:
 	switch_player_state(PlayerState.PLAYING)
+
+func dismiss_tutorial_switch_back_to_play_tab() -> void:
+	user_data.tutorial_switch_back_to_play_tab = true
+	
+func _on_tab_container_tab_selected(tab: int) -> void:
+	if user_data != null && user_data.tutorial_switch_back_to_play_tab == false && player_state == PlayerState.DEAD && tab_container.tabs_visible:
+		var config_index = tab_container.get_tab_idx_from_control(tab_child_config)
+		if tab == config_index:
+			var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+			var pos : Vector2 = get_global_pos_of_center_of_tab(tab_child_play)
+			tutorial.init_to_lower_right("Once you've selected which handicaps\nyou want to play with, switch back to\nthe Play tab to launch the next game.", pos, dismiss_tutorial_switch_back_to_play_tab)
+			add_child(tutorial)

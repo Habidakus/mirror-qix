@@ -743,4 +743,5 @@ size_flags_horizontal = 3
 layout_mode = 2
 color = Color(0, 0, 0, 1)
 
+[connection signal="tab_changed" from="MarginContainer/HBoxContainer/TabContainer" to="." method="_on_tab_container_tab_selected"]
 [connection signal="button_up" from="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/Restart" to="." method="_on_restart_button_up"]

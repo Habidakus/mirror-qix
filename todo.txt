@@ -13,5 +13,4 @@
 - green dot respawns tired, and speeds up as it recovers
 - implement https://en.wikipedia.org/wiki/Rapidly-exploring_random_tree when hunting player draw paths for advanced hunters
 - let us start with the config page open if we're returning players
-
-Credit Randy and Sandy Pfeiffer (1981)
+- add more tutorial dialogs explaining game play
