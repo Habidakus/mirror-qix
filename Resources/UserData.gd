@@ -18,3 +18,5 @@ class_name UserData
 @export var perk_unlock_allow_very_slow_build : bool = false
 @export var perk_unlock_allow_fast_build : bool = false
 @export var perk_unlock_allow_very_fast_build : bool = false
+
+@export var perk_unlock_two_border_fuzes : bool = false

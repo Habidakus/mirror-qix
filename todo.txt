@@ -4,7 +4,6 @@
 - faster enemy respawn
 - swarm enemy vs bounce enemy vs dwarves
 - different icons for the player
-- multiple outer loop fuses
 - Add an instructions/strategies page
 - should show somewhere how close you are to unlocking your next unlock point
 - add vfx at the start of the level to indicate where the player is

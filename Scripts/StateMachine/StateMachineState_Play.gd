@@ -74,11 +74,14 @@ var build_speed_slow_button : Button = null
 var build_speed_very_slow_button : Button = null
 var build_speed_fast_button : Button = null
 var build_speed_very_fast_button : Button = null
+var unlock_dual_fuzes_button : Button = null
 var area_covered_config_section : Control = null
 var coverage_option_button : OptionButton = null
 var cover_eighty_percent_button : Button = null
 var cover_eightyfive_percent_button : Button = null
 var cover_ninety_percent_button : Button = null
+var border_enemy_config_section : Control = null
+var border_enemy_option_button : OptionButton = null
 
 var persistant_user_data : String = "user://qix_user_data.tres"
 var user_data : UserData = null
@@ -95,6 +98,8 @@ var enter_button_cooldown : float = 0
 var enter_button_max_cooldown : float = 10.0
 var mirror_power_cooldown : float = 10.0
 
+var number_of_enemy_border_fuzes : int = 1
+
 var increase_in_unlock_cost_per_unlock : float = 2.0
 # TODO: Organize these into sets of resources
 enum InnerLoopProtection { NONE, FULL, BACKUP }
@@ -104,6 +109,7 @@ var perk_multiple_no_inner_loop_protection : float = 1.25
 var perk_multiple_eighty_percent_coverage : float = 1.5
 var perk_multiple_eightyfive_percent_coverage : float = 2
 var perk_multiple_ninety_percent_coverage : float = 2.75
+var perk_multiple_dual_border_fuzes : float = 1.75
 
 func are_any_unlocks_available() -> bool:
 	if user_data.unlocks_available == 0:
@@ -111,6 +117,8 @@ func are_any_unlocks_available() -> bool:
 	if !user_data.perk_unlock_allow_backtracking_inner_loop:
 		return true
 	if !user_data.perk_unlock_allow_crossing_inner_loop:
+		return true
+	if !user_data.perk_unlock_two_border_fuzes:
 		return true
 	if !user_data.perk_unlock_eighty_percent_coverage || !user_data.perk_unlock_eightyfive_percent_coverage || !user_data.perk_unlock_ninety_percent_coverage:
 		return true
@@ -122,6 +130,8 @@ func are_any_configs_unlocked() -> bool:
 	if user_data.perk_unlock_allow_backtracking_inner_loop:
 		return true
 	if user_data.perk_unlock_allow_crossing_inner_loop:
+		return true
+	if user_data.perk_unlock_two_border_fuzes:
 		return true
 	if user_data.perk_unlock_eighty_percent_coverage || user_data.perk_unlock_eightyfive_percent_coverage || user_data.perk_unlock_ninety_percent_coverage:
 		return true
@@ -156,6 +166,15 @@ func setup_config_tab() -> void:
 		
 	var space_bar_config_section : Control = tab_child_config.find_child("SpaceBarConfig")
 	space_bar_config_section.hide()
+	
+	if user_data.perk_unlock_two_border_fuzes:
+		border_enemy_config_section.show()
+		border_enemy_option_button.clear()
+		border_enemy_option_button.add_item("Single boarder fuze", 1)
+		border_enemy_option_button.add_item("Dual boarder fuzes (score x%.2f)" % perk_multiple_dual_border_fuzes, 2)
+		border_enemy_option_button.selected = border_enemy_option_button.get_item_index(number_of_enemy_border_fuzes)
+	else:
+		border_enemy_config_section.hide()
 	
 	if user_data.perk_unlock_allow_slow_build || user_data.perk_unlock_allow_very_slow_build || user_data.perk_unlock_allow_fast_build || user_data.perk_unlock_allow_very_fast_build:
 		enter_config_section.show()
@@ -218,6 +237,14 @@ func setup_unlock_tab() -> void:
 	else:
 		build_path_crossing_button.button_pressed = false
 		build_path_crossing_button.disabled = picking_disabled
+	
+	# Enemy modifications
+	if user_data.perk_unlock_two_border_fuzes:
+		unlock_dual_fuzes_button.button_pressed = true
+		unlock_dual_fuzes_button.disabled = true
+	else:
+		unlock_dual_fuzes_button.button_pressed = false
+		unlock_dual_fuzes_button.disabled = picking_disabled
 		
 	# Build speed unlocks
 	if user_data.perk_unlock_allow_slow_build:
@@ -300,6 +327,9 @@ func on_enter_power_option_button(index : int) -> void:
 	elif enter_button_power == EnterButtonPower.VERY_FAST_BUILD_SPEED:
 		enter_button_label.text = "Toggle Very Fast Build"
 
+func on_border_enemy_option_button(index : int) -> void:
+	number_of_enemy_border_fuzes = border_enemy_option_button.get_item_id(index)
+
 func on_build_path_backup_button() -> void:
 	if user_data.perk_unlock_allow_backtracking_inner_loop == false:
 		user_data.perk_unlock_allow_backtracking_inner_loop = true
@@ -367,6 +397,14 @@ func on_build_fast_button() -> void:
 func on_build_very_fast_button() -> void:
 	if user_data.perk_unlock_allow_very_fast_build == false:
 		user_data.perk_unlock_allow_very_fast_build = true
+		user_data.unlocks_available -= 1
+		save_user_data()
+		setup_config_tab()
+		setup_unlock_tab()
+
+func on_unlock_dual_fuzes_button() -> void:
+	if user_data.perk_unlock_two_border_fuzes == false:
+		user_data.perk_unlock_two_border_fuzes = true
 		user_data.unlocks_available -= 1
 		save_user_data()
 		setup_config_tab()
@@ -1486,9 +1524,14 @@ func resume_game() -> void:
 		add_child(enemy)
 	enemy.init(self, difficulty_tier)
 	
-	if fuze == null:
+	if fuze != null:
+		fuze.queue_free()
+
+	if number_of_enemy_border_fuzes == 1:
 		fuze = FuzeSingle.new()
-		add_child(fuze)
+	else:
+		fuze = FuzePair.new()
+	add_child(fuze)
 	fuze.init(self, difficulty_tier)
 	
 	score_multiplier = 1.0
@@ -1499,6 +1542,8 @@ func resume_game() -> void:
 	for i in range(0, difficulty_tier):
 		score_multiplier *= 1.1
 	
+	if number_of_enemy_border_fuzes > 1:
+		score_multiplier *= perk_multiple_dual_border_fuzes
 	if fraction_of_field_needed >= 0.9:
 		score_multiplier *= perk_multiple_ninety_percent_coverage
 	elif fraction_of_field_needed >= 0.85:
@@ -1550,6 +1595,7 @@ func init_game() -> void:
 	build_speed_very_slow_button = tab_child_unlock.find_child("UnlockExtraSlowBuildMode") as Button
 	build_speed_fast_button = tab_child_unlock.find_child("UnlockFastBuildMode") as Button
 	build_speed_very_fast_button = tab_child_unlock.find_child("UnlockExtraFastBuildMode") as Button
+	unlock_dual_fuzes_button = tab_child_unlock.find_child("UnlockDualFuzes") as Button
 	area_covered_config_section = tab_child_config.find_child("AreaCoverNeeded")
 	coverage_option_button = area_covered_config_section.find_child("OptionButton")
 	cover_eighty_percent_button = tab_child_unlock.find_child("UnlockEightyPercent") as Button
@@ -1560,6 +1606,8 @@ func init_game() -> void:
 	player_travel_speaker.pitch_scale = player_moving_pitch_scale
 	enemy_speaker = tab_child_controls.find_child("EnemySpeaker") as AudioStreamPlayer
 	fuze_speaker = tab_child_controls.find_child("FuzeSpeaker") as AudioStreamPlayer
+	border_enemy_config_section = tab_child_config.find_child("BorderEnemyConfig")
+	border_enemy_option_button = border_enemy_config_section.find_child("OptionButton")
 
 	build_protection_option_button.item_selected.connect(on_build_protection_option_button)
 	build_path_backup_button.pressed.connect(on_build_path_backup_button)
@@ -1574,6 +1622,8 @@ func init_game() -> void:
 	cover_ninety_percent_button.pressed.connect(on_cover_ninety_percent_button)
 	scoreboard_name_submit.pressed.connect(on_scoreboard_name_submit)
 	enter_power_option_button.item_selected.connect(on_enter_power_option_button)
+	unlock_dual_fuzes_button.pressed.connect(on_unlock_dual_fuzes_button)
+	border_enemy_option_button.item_selected.connect(on_border_enemy_option_button)
 	
 	#(player_travel_speaker.stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_PINGPONG
 	
