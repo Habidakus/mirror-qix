@@ -18,8 +18,6 @@ var enter_button_power : EnterButtonPower = EnterButtonPower.MIRROR
 var mirror_state_cooldown_current : float = 0.0
 var mirror_state_cooldown_max : float = 0.75
 
-var assert_color : bool = false
-
 var enemy : Enemy = null
 var fuze : Fuze = null
 var outer_lines : Array = []
@@ -992,7 +990,9 @@ func complete_loop(x : int, y : int) -> void:
 func move_if_possible(x : int, y : int) -> bool: # returns true if we can continue calling this
 	if abs(player_pos.x - x) > 1 || abs(player_pos.y - y) > 1:
 		assert(false)
-		assert_color = true
+	if fuze.is_this_location_death(x, y):
+		on_player_death()
+		return false
 	if player_on_outer_lines:
 		if is_on_outer_line(x, y):
 			player_pos = Vector2i(x, y)
@@ -1263,10 +1263,8 @@ func toggle_build_speed(power : EnterButtonPower) -> void:
 
 	if !can_toggle_slower && would_toggle_make_us_slower:
 		# toggling would slow us down, and we're currently forbidden from going slower
-		print("Toggling speed would make you slower, not allowed")
 		return
 	
-	print("Toggling speed")
 	enter_button_power_build_speed_on = !enter_button_power_build_speed_on
 	if enter_button_power_build_speed_on:
 		if toggle_speed_is_a_fast_speed:
@@ -1489,7 +1487,7 @@ func resume_game() -> void:
 	enemy.init(self, difficulty_tier)
 	
 	if fuze == null:
-		fuze = Fuze.new()
+		fuze = FuzeSingle.new()
 		add_child(fuze)
 	fuze.init(self, difficulty_tier)
 	
