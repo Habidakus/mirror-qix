@@ -45,7 +45,6 @@ func fetch_scores() -> void:
 			add_score(user_data.highscore_name, -1)
 
 func add_score(player_name : String, score) -> void:
-	print("%7.2f %s" % [score, player_name])
 	var score_label : Label = Label.new()
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	score_label.add_theme_font_size_override("font_size", 30)

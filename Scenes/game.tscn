@@ -45,10 +45,9 @@ theme_override_constants/separation = 10
 [node name="TabContainer" type="TabContainer" parent="MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-current_tab = 3
+current_tab = 0
 
 [node name="Controls" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
-visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -388,21 +387,20 @@ theme_override_font_sizes/font_size = 10
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="TabConfig" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
+[node name="EnterConfig" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_right = 10
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/TabConfig"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/EnterConfig"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Config/TabConfig/VBoxContainer"]
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Config/EnterConfig/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "TAB Power:
-"
+text = "ENTER/TAB Power:"
 
-[node name="OptionButton" type="OptionButton" parent="MarginContainer/HBoxContainer/TabContainer/Config/TabConfig/VBoxContainer"]
+[node name="OptionButton" type="OptionButton" parent="MarginContainer/HBoxContainer/TabContainer/Config/EnterConfig/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 
@@ -575,6 +573,7 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="Play" type="CenterContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
+visible = false
 layout_mode = 2
 metadata/_tab_index = 3
 

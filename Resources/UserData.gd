@@ -13,3 +13,8 @@ class_name UserData
 @export var perk_unlock_eighty_percent_coverage : bool = false
 @export var perk_unlock_eightyfive_percent_coverage : bool = false
 @export var perk_unlock_ninety_percent_coverage : bool = false
+
+@export var perk_unlock_allow_slow_build : bool = false
+@export var perk_unlock_allow_very_slow_build : bool = false
+@export var perk_unlock_allow_fast_build : bool = false
+@export var perk_unlock_allow_very_fast_build : bool = false

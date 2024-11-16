@@ -7,11 +7,12 @@ class_name PlayState
 @export var fade_time : float = 1.5
 @export var player_speed_inner : float = 100
 @export var player_speed_outer : float = 150
+var enter_button_power_build_speed_on : bool = false
 
 enum PlayerState { UNINITIALIZED, PLAYING, DEAD, WON_PAUSE, MIRROR_MOVE }
 var player_state : PlayerState = PlayerState.UNINITIALIZED
 
-enum EnterButtonPower { MIRROR }
+enum EnterButtonPower { MIRROR, SLOW_BUILD_SPEED, VERY_SLOW_BUILD_SPEED, FAST_BUILD_SPEED, VERY_FAST_BUILD_SPEED }
 var enter_button_power : EnterButtonPower = EnterButtonPower.MIRROR
 
 var mirror_state_cooldown_current : float = 0.0
@@ -23,9 +24,10 @@ var enemy : Enemy = null
 var fuze : Fuze = null
 var outer_lines : Array = []
 var inner_lines : Array = []
+# TODO: Replace array of Rect2i with a class that manages them, this way we can color them different too
 var completed_rects : Array = []
-#var score : int = 0
 var area_covered : int = 0
+var area_covered_modifier_because_of_speed : float = 0
 var area_needed : int = 0
 var fraction_of_field_needed : float = 0.75
 var percent_covered : float = 0
@@ -61,9 +63,12 @@ var right_button : Button = null
 var left_button : Button = null
 var space_bar_button : Button = null
 var enter_button_button : Button = null
+var enter_button_label : Label = null
 var enter_button_color_rect : ColorRect = null
 var score_value_label : Label = null
 var unlocks_available_label : Label = null
+var enter_config_section : Control = null
+var enter_power_option_button : OptionButton = null
 var build_line_config_section : Control = null
 var build_protection_option_button : OptionButton = null
 var build_path_backup_button : Button = null
@@ -112,6 +117,8 @@ func are_any_unlocks_available() -> bool:
 		return true
 	if !user_data.perk_unlock_eighty_percent_coverage || !user_data.perk_unlock_eightyfive_percent_coverage || !user_data.perk_unlock_ninety_percent_coverage:
 		return true
+	if !user_data.perk_unlock_allow_slow_build || !user_data.perk_unlock_allow_very_slow_build || !user_data.perk_unlock_allow_fast_build || !user_data.perk_unlock_allow_very_fast_build:
+		return true
 	return false
 
 func are_any_configs_unlocked() -> bool:
@@ -120,6 +127,8 @@ func are_any_configs_unlocked() -> bool:
 	if user_data.perk_unlock_allow_crossing_inner_loop:
 		return true
 	if user_data.perk_unlock_eighty_percent_coverage || user_data.perk_unlock_eightyfive_percent_coverage || user_data.perk_unlock_ninety_percent_coverage:
+		return true
+	if user_data.perk_unlock_allow_slow_build || user_data.perk_unlock_allow_very_slow_build || user_data.perk_unlock_allow_fast_build || user_data.perk_unlock_allow_very_fast_build:
 		return true
 	return false
 	
@@ -147,10 +156,25 @@ func setup_config_tab() -> void:
 				build_protection_option_button.selected = build_protection_option_button.get_item_index(InnerLoopProtection.NONE)
 	else:
 		build_line_config_section.hide()
+		
 	var space_bar_config_section : Control = tab_child_config.find_child("SpaceBarConfig")
 	space_bar_config_section.hide()
-	var tab_config_section : Control = tab_child_config.find_child("TabConfig")
-	tab_config_section.hide()
+	
+	if user_data.perk_unlock_allow_slow_build || user_data.perk_unlock_allow_very_slow_build || user_data.perk_unlock_allow_fast_build || user_data.perk_unlock_allow_very_fast_build:
+		enter_config_section.show()
+		enter_power_option_button.clear()
+		enter_power_option_button.add_item("Reverse board", EnterButtonPower.MIRROR)
+		if user_data.perk_unlock_allow_slow_build:
+			enter_power_option_button.add_item("Toggle Slow Build Speed", EnterButtonPower.SLOW_BUILD_SPEED)
+		if user_data.perk_unlock_allow_very_slow_build:
+			enter_power_option_button.add_item("Toggle Very Slow Build Speed", EnterButtonPower.VERY_SLOW_BUILD_SPEED)
+		if user_data.perk_unlock_allow_fast_build:
+			enter_power_option_button.add_item("Toggle Fast Build Speed", EnterButtonPower.FAST_BUILD_SPEED)
+		if user_data.perk_unlock_allow_very_fast_build:
+			enter_power_option_button.add_item("Toggle Very Fast Build Speed", EnterButtonPower.VERY_FAST_BUILD_SPEED)
+		enter_power_option_button.selected = enter_power_option_button.get_item_index(enter_button_power)
+	else:
+		enter_config_section.hide()
 	
 	if user_data.perk_unlock_eighty_percent_coverage:
 		area_covered_config_section.show()
@@ -199,14 +223,38 @@ func setup_unlock_tab() -> void:
 		build_path_crossing_button.disabled = picking_disabled
 		
 	# Build speed unlocks
-	build_speed_slow_button.button_pressed = false
-	build_speed_slow_button.disabled = true
-	build_speed_very_slow_button.button_pressed = false
-	build_speed_very_slow_button.disabled = true
-	build_speed_fast_button.button_pressed = false
-	build_speed_fast_button.disabled = true
-	build_speed_very_fast_button.button_pressed = false
-	build_speed_very_fast_button.disabled = true
+	if user_data.perk_unlock_allow_slow_build:
+		build_speed_slow_button.button_pressed = true
+		build_speed_slow_button.disabled = true
+		build_speed_very_slow_button.show()
+		if user_data.perk_unlock_allow_very_slow_build:
+			build_speed_very_slow_button.button_pressed = true
+			build_speed_very_slow_button.disabled = true
+		else:
+			build_speed_very_slow_button.button_pressed = false
+			build_speed_very_slow_button.disabled = picking_disabled
+		build_speed_fast_button.show()
+		if user_data.perk_unlock_allow_fast_build:
+			build_speed_fast_button.button_pressed = true
+			build_speed_fast_button.disabled = true
+			
+			build_speed_very_fast_button.show()
+			if user_data.perk_unlock_allow_very_fast_build:
+				build_speed_very_fast_button.button_pressed = true
+				build_speed_very_fast_button.disabled = true
+			else:
+				build_speed_very_fast_button.button_pressed = false
+				build_speed_very_fast_button.disabled = picking_disabled
+		else:
+			build_speed_fast_button.button_pressed = false
+			build_speed_fast_button.disabled = picking_disabled
+			build_speed_very_fast_button.hide()
+	else:
+		build_speed_slow_button.button_pressed = false
+		build_speed_slow_button.disabled = picking_disabled
+		build_speed_very_slow_button.hide()
+		build_speed_fast_button.hide()
+		build_speed_very_fast_button.hide()
 	
 	# coverage
 	if !user_data.perk_unlock_eighty_percent_coverage:
@@ -241,6 +289,19 @@ func on_build_protection_option_button(index : int) -> void:
 
 func on_coverage_option_button(index : int) -> void:
 	fraction_of_field_needed = (coverage_option_button.get_item_id(index) as float) / 100.0
+
+func on_enter_power_option_button(index : int) -> void:
+	enter_button_power = enter_power_option_button.get_item_id(index) as EnterButtonPower
+	if enter_button_power == EnterButtonPower.MIRROR:
+		enter_button_label.text = "Mirror Board"
+	elif enter_button_power == EnterButtonPower.SLOW_BUILD_SPEED:
+		enter_button_label.text = "Toggle Slow Build"
+	elif enter_button_power == EnterButtonPower.VERY_SLOW_BUILD_SPEED:
+		enter_button_label.text = "Toggle Very Slow Build"
+	elif enter_button_power == EnterButtonPower.FAST_BUILD_SPEED:
+		enter_button_label.text = "Toggle Fast Build"
+	elif enter_button_power == EnterButtonPower.VERY_FAST_BUILD_SPEED:
+		enter_button_label.text = "Toggle Very Fast Build"
 
 func on_build_path_backup_button() -> void:
 	if user_data.perk_unlock_allow_backtracking_inner_loop == false:
@@ -283,13 +344,36 @@ func on_cover_ninety_percent_button() -> void:
 		setup_unlock_tab()
 
 func on_build_slow_button() -> void:
-	pass
+	if user_data.perk_unlock_allow_slow_build == false:
+		user_data.perk_unlock_allow_slow_build = true
+		user_data.unlocks_available -= 1
+		save_user_data()
+		setup_config_tab()
+		setup_unlock_tab()
+		
 func on_build_very_slow_button() -> void:
-	pass
+	if user_data.perk_unlock_allow_very_slow_build == false:
+		user_data.perk_unlock_allow_very_slow_build = true
+		user_data.unlocks_available -= 1
+		save_user_data()
+		setup_config_tab()
+		setup_unlock_tab()
+		
 func on_build_fast_button() -> void:
-	pass
+	if user_data.perk_unlock_allow_fast_build == false:
+		user_data.perk_unlock_allow_fast_build = true
+		user_data.unlocks_available -= 1
+		save_user_data()
+		setup_config_tab()
+		setup_unlock_tab()
+		
 func on_build_very_fast_button() -> void:
-	pass
+	if user_data.perk_unlock_allow_very_fast_build == false:
+		user_data.perk_unlock_allow_very_fast_build = true
+		user_data.unlocks_available -= 1
+		save_user_data()
+		setup_config_tab()
+		setup_unlock_tab()
 
 func init_state(state_machine: StateMachine) -> void:
 	active_process_mode = self.process_mode
@@ -308,6 +392,10 @@ func add_player_direction(dx : float, dy : float) -> void:
 	else:
 		dx = dx * player_speed_inner * tier_modifier
 		dy = dy * player_speed_inner * tier_modifier
+		if enter_button_power_build_speed_on:
+			var boost : float = get_enter_button_power_speed_multiple(enter_button_power)
+			dx = dx * boost
+			dy = dy * boost
 	if player_movement == Vector2.ZERO:
 		player_movement = Vector2(dx, dy)
 		player_travel_speaker.set_pitch_scale(player_moving_pitch_scale)
@@ -880,16 +968,22 @@ func complete_loop(x : int, y : int) -> void:
 	var loop_1_area : int = measure_area(two_loops[0])
 	var loop_2_area : int = measure_area(two_loops[1])
 	#print("%s + %s = %s" % [loop_1_area, loop_2_area, loop_1_area + loop_2_area])
+	
+	var boost : float = get_enter_button_power_speed_multiple(enter_button_power)
+	var boost_score_diff : float = 0
 	if loop_1_area < loop_2_area:
 		area_covered += loop_1_area
+		boost_score_diff = (loop_1_area) / boost - loop_1_area
 		score_loop(two_loops[0])
 		outer_lines = two_loops[1]
 	else:
 		area_covered += loop_2_area
+		boost_score_diff = (loop_2_area) / boost - loop_2_area
 		score_loop(two_loops[1])
 		outer_lines = two_loops[0]
 	play_player_area_capture()
 	progress_bar.value = round(area_covered * 100.0 / float(area_needed))
+	area_covered_modifier_because_of_speed += boost_score_diff
 	inner_lines = []
 	player_on_outer_lines = true
 	player_travel_speaker.stop()
@@ -922,7 +1016,7 @@ func move_if_possible(x : int, y : int) -> bool: # returns true if we can contin
 
 var score : float = 0
 func update_score() -> void:
-	var frac : float = float(area_covered) / float(area_needed)
+	var frac : float = float(area_covered + area_covered_modifier_because_of_speed) / float(area_needed)
 	if frac > 1.0:
 		# We reward the player more for completing extra area
 		frac -= 1.0
@@ -1052,6 +1146,10 @@ func _process(delta: float) -> void:
 		fuze.move_fuze(delta)
 
 func process_player_input(delta : float) -> void:
+	if Input.is_action_just_pressed("power_button") || enter_button_button.button_pressed:
+		if process_enter_button(): # if returned true, they're advising us to stop processing this turn
+			return
+		
 	if player_on_outer_lines == false:
 		# player is burning new path
 		process_inner_line_input(delta)
@@ -1060,9 +1158,6 @@ func process_player_input(delta : float) -> void:
 		return
 	if Input.is_key_pressed(KEY_SPACE) || space_bar_button.button_pressed:
 		process_inner_path_start()
-		return
-	if Input.is_key_pressed(KEY_TAB) || Input.is_key_pressed(KEY_ENTER) || enter_button_button.button_pressed:
-		process_enter_button()
 		return
 
 func start_inner_path(x : int, y : int) -> void:
@@ -1151,17 +1246,58 @@ func advance_mirroring(delta: float) -> void:
 	if mirror_state_cooldown_current <= 0:
 		switch_player_state(PlayerState.PLAYING)
 
-func process_enter_button() -> void:
+func get_enter_button_power_speed_multiple(power : EnterButtonPower) -> float:
+	if power == EnterButtonPower.SLOW_BUILD_SPEED:
+		return 0.5
+	if power == EnterButtonPower.VERY_SLOW_BUILD_SPEED:
+		return 1.0 / 3.0
+	if power == EnterButtonPower.FAST_BUILD_SPEED:
+		return 1.5
+	if power == EnterButtonPower.VERY_FAST_BUILD_SPEED:
+		return 2
+	return 1
+		
+func toggle_build_speed(power : EnterButtonPower) -> void:
+	var can_toggle_slower : bool = false
+	if player_on_outer_lines:
+		can_toggle_slower = true
+
+	var enter_button_power_speed_multiple : float = get_enter_button_power_speed_multiple(power)
+	var toggle_speed_is_a_fast_speed : bool = enter_button_power_speed_multiple > 1.0
+	var would_toggle_make_us_slower : bool = toggle_speed_is_a_fast_speed == enter_button_power_build_speed_on
+
+	if !can_toggle_slower && would_toggle_make_us_slower:
+		# toggling would slow us down, and we're currently forbidden from going slower
+		print("Toggling speed would make you slower, not allowed")
+		return
+	
+	print("Toggling speed")
+	enter_button_power_build_speed_on = !enter_button_power_build_speed_on
+	if enter_button_power_build_speed_on:
+		if toggle_speed_is_a_fast_speed:
+			enter_button_color_rect.color = Color.LIGHT_PINK
+		else:
+			enter_button_color_rect.color = Color.SADDLE_BROWN
+	else:
+		enter_button_color_rect.color = Color.WHITE
+
+func process_enter_button() -> bool: # if true, stop processing inputs this tick
 	if player_state != PlayerState.PLAYING:
-		return
-	if enter_button_cooldown > 0:
-		return
+		return true
 
 	if enter_button_power == EnterButtonPower.MIRROR:
+		if enter_button_cooldown > 0:
+			return false
 		if player_on_outer_lines:
 			switch_player_state(PlayerState.MIRROR_MOVE)
-	else:
-		assert(false, "Enter Button Power not implemented")
+			return true
+	
+	if enter_button_power == EnterButtonPower.SLOW_BUILD_SPEED || enter_button_power == EnterButtonPower.VERY_SLOW_BUILD_SPEED || enter_button_power == EnterButtonPower.FAST_BUILD_SPEED || enter_button_power == EnterButtonPower.VERY_FAST_BUILD_SPEED:
+		toggle_build_speed(enter_button_power)
+		return false
+
+	assert(false, "Enter Button Power not implemented")
+	return false
 
 func process_inner_path_start() -> void:
 	if Input.is_key_pressed(KEY_DOWN) || Input.is_key_pressed(KEY_S) || down_button.button_pressed:
@@ -1342,6 +1478,9 @@ func resume_game() -> void:
 	completed_rects = []
 	outer_lines = []
 	
+	if enter_button_power_build_speed_on:
+		toggle_build_speed(enter_button_power)
+	
 	var pfs : Vector2i = Vector2i(int(play_field.size.x) - 1, int(play_field.size.y) - 1) 
 	add_line(Vector2i(0,0), Vector2i(pfs.x, 0))
 	add_line(Vector2i(pfs.x, 0), pfs)
@@ -1350,6 +1489,7 @@ func resume_game() -> void:
 	
 	progress_bar.value = 0
 	area_covered = 0
+	area_covered_modifier_because_of_speed = 0
 	area_needed = int(round((play_field.size.x - 1) * (play_field.size.y - 1) * fraction_of_field_needed))
 	player_on_outer_lines = true
 	player_pos = Vector2(0, play_field.size.y / 2)
@@ -1408,12 +1548,15 @@ func init_game() -> void:
 	left_button = find_child("left_button") as Button
 	space_bar_button = find_child("SpaceBarButton") as Button
 	enter_button_button = find_child("EnterButtonButton") as Button
+	enter_button_label = find_child("EnterButtonLabel") as Label
 	enter_button_color_rect = find_child("EnterButtonColorRect") as ColorRect
 	score_value_label = find_child("Score") as Label
 	scoreboard_name_container = find_child("ScoreboardNameContainer") as Container
 	scoreboard_name_line = find_child("ScoreboardName") as LineEdit
 	scoreboard_name_submit = find_child("EnterNameButton") as Button
 	unlocks_available_label = find_child("UnlocksAvailable") as Label
+	enter_config_section = tab_child_config.find_child("EnterConfig")
+	enter_power_option_button = enter_config_section.find_child("OptionButton")
 	build_line_config_section = tab_child_config.find_child("BuildLineConfig")
 	build_protection_option_button = build_line_config_section.find_child("OptionButton")
 	build_path_backup_button = tab_child_unlock.find_child("UnlockBuildPathReversing") as Button
@@ -1445,6 +1588,7 @@ func init_game() -> void:
 	cover_eightyfive_percent_button.pressed.connect(on_cover_eightyfive_percent_button)
 	cover_ninety_percent_button.pressed.connect(on_cover_ninety_percent_button)
 	scoreboard_name_submit.pressed.connect(on_scoreboard_name_submit)
+	enter_power_option_button.item_selected.connect(on_enter_power_option_button)
 	
 	#(player_travel_speaker.stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_PINGPONG
 	
