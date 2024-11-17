@@ -1601,7 +1601,7 @@ func resume_game() -> void:
 	player_travel_speaker.stop()
 	
 	if enemy == null:
-		enemy = Enemy.new()
+		enemy = EnemyDwarf.new()
 		add_child(enemy)
 	enemy.init(self, difficulty_tier)
 	
@@ -1774,13 +1774,13 @@ func spam_play_tutorials() -> void:
 		return
 	if user_data.tutorial_which_one_is_the_enemy == false && !player_on_outer_lines:
 		if enemy.is_alive():
-			var dist_from_enemy_squared : float = (player_pos - enemy.pos_on_field).length_squared()
+			var dist_from_enemy_squared : float = enemy.get_distance_from_point_squared(player_pos)
 			var inner_path_dist = get_path_length(inner_lines)
-			if dist_from_enemy_squared <= (inner_path_dist * inner_path_dist):
+			if dist_from_enemy_squared <= 2 * (inner_path_dist * inner_path_dist):
 				user_data.tutorial_which_one_is_the_enemy = true
 				switch_player_state(PlayerState.MODAL_TUTORIAL)
 				var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
-				var pos : Vector2 = play_field.global_position + (enemy.pos_on_field as Vector2)
+				var pos : Vector2 = play_field.global_position + (enemy.get_tutorial_location() as Vector2)
 				tutorial.init_left("This is an enemy. While building a\npath to capture area you must not let\nthem hit the red path you are drawing.", pos, dismiss_how_to_play_tutorial)
 				add_child(tutorial)
 				return
