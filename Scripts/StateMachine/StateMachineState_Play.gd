@@ -1128,6 +1128,13 @@ func move_if_possible(x : int, y : int) -> bool: # returns true if we can contin
 	if is_on_inner_line(x, y):
 		if perk_inner_loop_protection != InnerLoopProtection.FULL:
 			on_player_death(CauseOfDeath.CROSSING_INNER_LINE)
+		elif user_data.tutorial_trail_protection == false:
+			user_data.tutorial_trail_protection = true
+			switch_player_state(PlayerState.MODAL_TUTORIAL)
+			var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+			var pos : Vector2 = play_field.global_position + (player_pos as Vector2)
+			tutorial.init_left("You have bumped into your own trail. In some unlock\nmodes this would cause you to die, but not this time.\nYou want to connect back to the white border line.", pos, dismiss_how_to_play_tutorial)
+			add_child(tutorial)
 		return false
 	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
 		inner_lines.back()[1] = Vector2i(x, y)
@@ -1235,17 +1242,16 @@ func switch_player_state(new_state : PlayerState) -> void:
 		player_state = new_state
 		if !user_data.highscore_name.is_empty():
 			scoreboard_name_container.hide()
-			show_high_score_list_button.show()
 			game_state_label.text = "Welcome %s" % user_data.highscore_name
 		else:
 			scoreboard_name_container.show()
-			show_high_score_list_button.hide()
 			game_state_label.text = "Get Ready"
 		restart_label.text = "Start Game"
 		show_tab(tab_child_play)
 		setup_config_tab()
 		setup_unlock_tab()
 		select_tab(tab_child_config, true)
+		show_high_score_list_button.hide()
 		return
 
 	if new_state == PlayerState.DEAD:
