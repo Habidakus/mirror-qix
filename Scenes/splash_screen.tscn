@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://dau303qc0rqdx"]
+[gd_scene load_steps=3 format=3 uid="uid://dau303qc0rqdx"]
 
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_AnyKeyToContinue.gd" id="1_sq4lf"]
+[ext_resource type="Script" path="res://Scripts/SplashQixAnim.gd" id="2_sdxkw"]
 
 [node name="SplashScreen" type="Control"]
 layout_mode = 3
@@ -10,7 +11,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_sq4lf")
-time_out_in_seconds = 3.0
 fade_in = true
 fade_out = true
 
@@ -30,6 +30,7 @@ theme_override_constants/margin_bottom = 10
 
 [node name="CenterContainer" type="CenterContainer" parent="MarginContainer"]
 layout_mode = 2
+script = ExtResource("2_sdxkw")
 
 [node name="Label" type="Label" parent="MarginContainer/CenterContainer"]
 custom_minimum_size = Vector2(848, 0)
