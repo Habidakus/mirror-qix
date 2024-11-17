@@ -28,6 +28,9 @@ func enter_state() -> void:
 		var destination_color : Color = Color(Color.WHITE, 1)
 		tween.tween_property(self, "modulate", destination_color, fade_time)
 	high_score_grid = find_child("HighScoreGrid") as Container
+	var current_children = high_score_grid.get_children()
+	for child in current_children:
+		high_score_grid.remove_child(child)
 	fetch_scores()
 
 func fetch_scores() -> void:

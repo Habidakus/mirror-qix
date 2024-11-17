@@ -87,6 +87,7 @@ var border_enemy_config_section : Control = null
 var border_enemy_option_button : OptionButton = null
 var hunter_enemy_config_section : Control = null
 var hunter_enemy_option_button : OptionButton = null
+var show_high_score_list_button : Button = null
 
 var persistant_user_data : String = "user://qix_user_data.tres"
 var user_data : UserData = null
@@ -352,6 +353,9 @@ func on_border_enemy_option_button(index : int) -> void:
 
 func on_hunter_enemy_option_button(index : int) -> void:
 	hunter_enemy_type = hunter_enemy_option_button.get_item_id(index) as HunterEnemyType
+
+func on_show_high_score_list_button() -> void:
+	leave_state("HighScoreList")
 
 func on_build_path_backup_button() -> void:
 	if user_data.perk_unlock_allow_backtracking_inner_loop == false:
@@ -1171,8 +1175,10 @@ func save_highscore() -> void:
 	if !user_data.highscore_name.is_empty():
 		SilentWolf.Scores.save_score(user_data.highscore_name, score)
 		scoreboard_name_container.hide()
+		show_high_score_list_button.show()
 		return
 	scoreboard_name_container.show()
+	show_high_score_list_button.hide()
 
 func on_scoreboard_name_submit() -> void:
 	var submitted_name : String = scoreboard_name_line.text
@@ -1197,6 +1203,7 @@ func on_scoreboard_name_submit() -> void:
 	if save_user_data():
 		scoreboard_name_container.hide()
 		save_highscore()
+		show_high_score_list_button.show()
 
 func save_user_data() -> bool:
 	var error : Error = ResourceSaver.save(user_data, persistant_user_data)
@@ -1228,9 +1235,11 @@ func switch_player_state(new_state : PlayerState) -> void:
 		player_state = new_state
 		if !user_data.highscore_name.is_empty():
 			scoreboard_name_container.hide()
+			show_high_score_list_button.show()
 			game_state_label.text = "Welcome %s" % user_data.highscore_name
 		else:
 			scoreboard_name_container.show()
+			show_high_score_list_button.hide()
 			game_state_label.text = "Get Ready"
 		restart_label.text = "Start Game"
 		show_tab(tab_child_play)
@@ -1266,6 +1275,7 @@ func switch_player_state(new_state : PlayerState) -> void:
 		hide_tab(tab_child_config)
 		hide_tab(tab_child_unlock)
 		select_tab(tab_child_play, true)
+		show_high_score_list_button.hide()
 		return
 
 func _process(delta: float) -> void:
@@ -1712,15 +1722,8 @@ func resume_game() -> void:
 		
 	(tab_child_controls.find_child("DifficultyTier") as Label).text = str(difficulty_tier + 1)
 	(tab_child_controls.find_child("ScoreMultiplier") as Label).text = "%.2f" % score_multiplier
-	
-func init_game() -> void:
-	# Move these to _ready()
-	
-	if ResourceLoader.exists(persistant_user_data):
-		user_data = ResourceLoader.load(persistant_user_data)
-	else:
-		user_data = UserData.new()
 
+func _ready() -> void:
 	play_field = find_child("PlayField") as Control
 	score_label = find_child("Score") as Label
 	tab_container = find_child("TabContainer") as TabContainer
@@ -1771,6 +1774,7 @@ func init_game() -> void:
 	hunter_enemy_config_section = tab_child_config.find_child("HunterEnemyConfig")
 	hunter_enemy_option_button = hunter_enemy_config_section.find_child("OptionButton")
 	unlock_progress_bar = tab_child_play.find_child("UnlockProgressBar") as ProgressBar
+	show_high_score_list_button = tab_child_play.find_child("ShowHighScoreListButton") as Button
 
 	build_protection_option_button.item_selected.connect(on_build_protection_option_button)
 	build_path_backup_button.pressed.connect(on_build_path_backup_button)
@@ -1789,6 +1793,13 @@ func init_game() -> void:
 	unlock_angry_rover_button.pressed.connect(on_unlock_angry_rover_button)
 	border_enemy_option_button.item_selected.connect(on_border_enemy_option_button)
 	hunter_enemy_option_button.item_selected.connect(on_hunter_enemy_option_button)
+	show_high_score_list_button.pressed.connect(on_show_high_score_list_button)
+	
+func init_game() -> void:
+	if ResourceLoader.exists(persistant_user_data):
+		user_data = ResourceLoader.load(persistant_user_data)
+	else:
+		user_data = UserData.new()
 	
 	set_unlock_progress_bar(user_data.unspent_score / user_data.points_until_next_unlock_credit)
 	
