@@ -35,3 +35,5 @@ class_name UserData
 @export var tutorial_using_mirror_button : bool = false
 @export var tutorial_which_how_to_capture_area : bool = false
 @export var tutorial_which_how_to_complete_level : bool = false
+@export var tutorial_using_speed_toggles_on_outer_line : bool = false
+@export var tutorial_using_speed_toggles_on_inner_line : bool = false

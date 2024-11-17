@@ -13,6 +13,5 @@
 - green dot respawns tired, and speeds up as it recovers
 - implement https://en.wikipedia.org/wiki/Rapidly-exploring_random_tree when hunting player draw paths for advanced hunters
 - let us start with the config page open if we're returning players
-- add tutorial explaining slow move speed
 - add unlock for dwarf opponent
 - able to switch to highscore from post-game page

@@ -32,6 +32,9 @@ func set_left_pos() -> void:
 		offset.y -= 3 * size.y / 2
 	elif global_position.y > 400:
 		offset.y -= size.y / 2
+	if (global_position.x + offset.x) < 20:
+		offset.x += (size.x + 40)
+	print("Global = %s  offset = %s  together = %s" % [global_position, offset, (global_position + offset)])
 	global_position += offset
 	set_line_ends()
 

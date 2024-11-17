@@ -1392,6 +1392,9 @@ func toggle_build_speed(power : EnterButtonPower) -> void:
 	else:
 		enter_button_color_rect.color = Color.WHITE
 
+func is_enter_button_power_speed_related() -> bool:
+	return enter_button_power == EnterButtonPower.SLOW_BUILD_SPEED || enter_button_power == EnterButtonPower.VERY_SLOW_BUILD_SPEED || enter_button_power == EnterButtonPower.FAST_BUILD_SPEED || enter_button_power == EnterButtonPower.VERY_FAST_BUILD_SPEED
+
 func process_enter_button() -> bool: # if true, stop processing inputs this tick
 	if player_state != PlayerState.PLAYING:
 		return true
@@ -1403,7 +1406,7 @@ func process_enter_button() -> bool: # if true, stop processing inputs this tick
 			switch_player_state(PlayerState.MIRROR_MOVE)
 			return true
 	
-	if enter_button_power == EnterButtonPower.SLOW_BUILD_SPEED || enter_button_power == EnterButtonPower.VERY_SLOW_BUILD_SPEED || enter_button_power == EnterButtonPower.FAST_BUILD_SPEED || enter_button_power == EnterButtonPower.VERY_FAST_BUILD_SPEED:
+	if is_enter_button_power_speed_related():
 		toggle_build_speed(enter_button_power)
 		return false
 
@@ -1834,6 +1837,23 @@ func spam_play_tutorials() -> void:
 		tutorial.init_to_lower_right("As you capture area, you will get closer\nand closer to completing the level.", pos, dismiss_how_to_play_tutorial)
 		add_child(tutorial)
 		return
+	if is_enter_button_power_speed_related() && user_data.tutorial_using_speed_toggles_on_outer_line == false:
+		user_data.tutorial_using_speed_toggles_on_outer_line = true
+		switch_player_state(PlayerState.MODAL_TUTORIAL)
+		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+		var pos : Vector2 = enter_button_button.global_position + enter_button_button.size / 2
+		tutorial.init_left("You now have a build speed power slotted.\nAt any time while not building you can\ntap ENTER to switch your build speed.", pos, dismiss_how_to_play_tutorial)
+		add_child(tutorial)
+		return
+	if is_enter_button_power_speed_related() && user_data.tutorial_using_speed_toggles_on_inner_line == false && get_path_length(inner_lines) > 20:
+		user_data.tutorial_using_speed_toggles_on_inner_line = true
+		switch_player_state(PlayerState.MODAL_TUTORIAL)
+		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+		var pos : Vector2 = enter_button_button.global_position + enter_button_button.size / 2
+		tutorial.init_left("While building you can only tap ENTER if it will make your\nspeed increase. Completing a build while still moving slow\nwill generate a higher score for the completed area.", pos, dismiss_how_to_play_tutorial)
+		add_child(tutorial)
+		return
+	 
 
 func dismiss_cause_of_death_tutorial() -> void:
 	enter_dead_state()
