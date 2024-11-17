@@ -2,7 +2,7 @@
 - fuse on inner loop if you stop
 - faster enemy movement
 - faster enemy respawn
-- swarm enemy vs bounce enemy vs dwarves
+- add swarm enemy
 - different icons for the player
 - Add an instructions/strategies page
 - should show somewhere how close you are to unlocking your next unlock point
@@ -14,3 +14,4 @@
 - implement https://en.wikipedia.org/wiki/Rapidly-exploring_random_tree when hunting player draw paths for advanced hunters
 - let us start with the config page open if we're returning players
 - add tutorial explaining slow move speed
+- add unlock for dwarf opponent
