@@ -530,6 +530,39 @@ static func on_line(x : int, y : int, start : Vector2i, end : Vector2i) -> bool:
 	#assert(false, "Odd line %s to %s" % [start, end])
 	return false
 
+func does_cross_path_el(start : Vector2i, end : Vector2i, path_el : Array) -> bool:
+	if is_path_element_on_x_axis(path_el):
+		var starts_right : bool = start.x < path_el[0].x
+		var ends_right : bool = end.x < path_el[0].x
+		if starts_right == ends_right:
+			return false
+		var slope : float = (end.y - start.y) / float(end.x - start.x)
+		var y_at_line : float = start.y + slope * (path_el[0].x - start.x)
+		if path_el[1].y > path_el[0].y:
+			return y_at_line <= path_el[1].y && y_at_line >= path_el[0].y
+		else:
+			return y_at_line <= path_el[0].y && y_at_line >= path_el[1].y
+	else:
+		var starts_above : bool = start.y > path_el[0].y
+		var ends_above : bool = end.y > path_el[0].y
+		if starts_above == ends_above:
+			return false
+		var slope : float = (end.x - start.x) / float(end.y - start.y)
+		var x_at_line : float = start.x + slope * (path_el[0].y - start.y)
+		if path_el[1].x > path_el[0].x:
+			return x_at_line <= path_el[1].x && x_at_line >= path_el[0].x
+		else:
+			return x_at_line <= path_el[0].x && x_at_line >= path_el[1].x
+
+func does_cross_path(start : Vector2i, end: Vector2i, path : Array) -> bool:
+	for line : Array in path:
+		if does_cross_path_el(start, end, line):
+			return true
+	return false
+
+func does_cross_inner_path(start : Vector2i, end : Vector2i) -> bool:
+	return does_cross_path(start, end, inner_lines)
+
 func get_outer_line_element(pos : Vector2i) -> Array:
 	for line in outer_lines:
 		if on_line(pos.x, pos.y, line[0], line[1]):
@@ -1601,7 +1634,7 @@ func resume_game() -> void:
 	player_travel_speaker.stop()
 	
 	if enemy == null:
-		enemy = EnemyDwarf.new()
+		enemy = EnemyRainbow.new()
 		add_child(enemy)
 	enemy.init(self, difficulty_tier)
 	
@@ -1781,7 +1814,7 @@ func spam_play_tutorials() -> void:
 				switch_player_state(PlayerState.MODAL_TUTORIAL)
 				var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
 				var pos : Vector2 = play_field.global_position + (enemy.get_tutorial_location() as Vector2)
-				tutorial.init_left("This is an enemy. While building a\npath to capture area you must not let\nthem hit the red path you are drawing.", pos, dismiss_how_to_play_tutorial)
+				tutorial.init_left("This is the Qix. While building a\npath to capture area you must not let\nthe Qix hit the path you are drawing.", pos, dismiss_how_to_play_tutorial)
 				add_child(tutorial)
 				return
 	if user_data.tutorial_using_mirror_button == false && enter_button_power == EnterButtonPower.MIRROR:
@@ -1818,7 +1851,7 @@ func on_player_death(cause_of_death : CauseOfDeath) -> void:
 		switch_player_state(PlayerState.MODAL_TUTORIAL)
 		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
 		var pos : Vector2 = play_field.global_position + (enemy.get_death_spot() as Vector2)
-		tutorial.init_left("You have died because a hunter\nhas reached your build trail.", pos, dismiss_cause_of_death_tutorial)
+		tutorial.init_left("You have died because a Qix\nhas reached your build trail.", pos, dismiss_cause_of_death_tutorial)
 		add_child(tutorial)
 	elif cause_of_death == CauseOfDeath.CROSSING_INNER_LINE && user_data.tutorial_cause_of_death_crossing_the_line == false:
 		user_data.tutorial_cause_of_death_crossing_the_line = true

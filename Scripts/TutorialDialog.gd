@@ -33,7 +33,6 @@ func set_left_pos() -> void:
 	elif global_position.y > 400:
 		offset.y -= size.y / 2
 	global_position += offset
-	print("TD#2 global_pos = %s" % global_position)
 	set_line_ends()
 
 func set_line_ends() -> void:

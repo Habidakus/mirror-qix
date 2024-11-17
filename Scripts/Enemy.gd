@@ -41,6 +41,9 @@ func get_tutorial_location() -> Vector2i:
 func chose_spawn_spot() -> void:
 	assert(false, "Must be implemented in child class")
 
+func chose_new_goal() -> void:
+	assert(false, "Must be implemented in child class")
+
 func change_state(new_state : EnemyState) -> void:
 	if new_state == EnemyState.RESPAWNING:
 		current_enemy_state = new_state
@@ -63,9 +66,6 @@ func change_state(new_state : EnemyState) -> void:
 		chose_new_goal()
 		return
 	assert(false)
-
-func chose_new_goal() -> void:
-	assert(false, "Must be implemented in child class")
 	
 func is_alive() -> bool:
 	return current_enemy_state == EnemyState.MOVING || current_enemy_state == EnemyState.HUNTING
