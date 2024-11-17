@@ -45,7 +45,7 @@ theme_override_constants/separation = 10
 [node name="TabContainer" type="TabContainer" parent="MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-current_tab = 1
+current_tab = 3
 
 [node name="Controls" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
 visible = false
@@ -336,6 +336,7 @@ volume_db = -10.0
 [node name="FuzeSpeaker" type="AudioStreamPlayer" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
 
 [node name="Config" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
+visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
@@ -633,7 +634,6 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="Play" type="CenterContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
-visible = false
 layout_mode = 2
 metadata/_tab_index = 3
 
@@ -712,6 +712,25 @@ text = "0"
 [node name="Control2" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 40
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Progress to next unlock"
+horizontal_alignment = 1
+
+[node name="UnlockProgressBar" type="ProgressBar" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
 
 [node name="Control" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Play/VBoxContainer"]
 custom_minimum_size = Vector2(0, 40)

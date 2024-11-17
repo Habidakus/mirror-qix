@@ -11,5 +11,4 @@
 - implement https://en.wikipedia.org/wiki/Rapidly-exploring_random_tree when hunting player draw paths for advanced hunters
 
 - able to switch to highscore from post-game page
-- should show somewhere how close you are to unlocking your next unlock point
 - add controller support

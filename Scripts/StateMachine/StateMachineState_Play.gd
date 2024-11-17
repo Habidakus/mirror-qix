@@ -44,6 +44,7 @@ var tab_child_play : Control = null
 var tab_child_config : Control = null
 var tab_child_unlock : Control = null
 var progress_bar : ProgressBar = null
+var unlock_progress_bar : ProgressBar = null
 var scoreboard_name_container : Container = null
 var scoreboard_name_line : LineEdit = null
 var scoreboard_name_submit : Button = null
@@ -1141,21 +1142,30 @@ func update_score() -> void:
 		frac *= 3.0
 		frac += 1.0
 	
+	var unlock_progress_start : float = user_data.unspent_score / user_data.points_until_next_unlock_credit
 	# base points is 1000
 	var old_score = score
 	score += (frac * 1000.0 * score_multiplier)
 	user_data.unspent_score += (frac * 1000.0 * score_multiplier)
+	var unlock_progress_end : float = user_data.unspent_score / user_data.points_until_next_unlock_credit
 	while user_data.unspent_score >= user_data.points_until_next_unlock_credit:
 		user_data.unspent_score -= user_data.points_until_next_unlock_credit
 		user_data.points_until_next_unlock_credit *= increase_in_unlock_cost_per_unlock
 		user_data.unlocks_available += 1
+		unlock_progress_end = 1
+		
 	save_user_data()
 	
 	var tween = get_tree().create_tween()
 	tween.tween_method(set_score_label, old_score, score, 2).set_trans(Tween.TRANS_SINE)
+	tween.parallel()
+	tween.tween_method(set_unlock_progress_bar, unlock_progress_start, unlock_progress_end, 2).set_trans(Tween.TRANS_SINE)
 
 func set_score_label(value : float) -> void:
 	score_value_label.text = "%7.2f" % [round(value * 10) / 10.0]
+
+func set_unlock_progress_bar(value : float) -> void:
+	unlock_progress_bar.value = 100 * value
 
 func save_highscore() -> void:
 	if !user_data.highscore_name.is_empty():
@@ -1760,6 +1770,7 @@ func init_game() -> void:
 	border_enemy_option_button = border_enemy_config_section.find_child("OptionButton")
 	hunter_enemy_config_section = tab_child_config.find_child("HunterEnemyConfig")
 	hunter_enemy_option_button = hunter_enemy_config_section.find_child("OptionButton")
+	unlock_progress_bar = tab_child_play.find_child("UnlockProgressBar") as ProgressBar
 
 	build_protection_option_button.item_selected.connect(on_build_protection_option_button)
 	build_path_backup_button.pressed.connect(on_build_path_backup_button)
@@ -1779,7 +1790,7 @@ func init_game() -> void:
 	border_enemy_option_button.item_selected.connect(on_border_enemy_option_button)
 	hunter_enemy_option_button.item_selected.connect(on_hunter_enemy_option_button)
 	
-	#(player_travel_speaker.stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_PINGPONG
+	set_unlock_progress_bar(user_data.unspent_score / user_data.points_until_next_unlock_credit)
 	
 	difficulty_tier = 0
 	fraction_of_field_needed = 0.75
