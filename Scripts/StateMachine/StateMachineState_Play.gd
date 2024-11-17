@@ -10,8 +10,8 @@ class_name PlayState
 var enter_button_power_build_speed_on : bool = false
 
 enum CauseOfDeath { FUSE, HUNTER, CROSSING_INNER_LINE }
-enum PlayerState { UNINITIALIZED, PLAYING, DEAD, WON_PAUSE, MIRROR_MOVE, MODAL_TUTORIAL }
-var player_state : PlayerState = PlayerState.UNINITIALIZED
+enum PlayerState { PRE_GAME, PLAYING, DEAD, WON_PAUSE, MIRROR_MOVE, MODAL_TUTORIAL }
+var player_state : PlayerState = PlayerState.PRE_GAME
 
 enum EnterButtonPower { MIRROR, SLOW_BUILD_SPEED, VERY_SLOW_BUILD_SPEED, FAST_BUILD_SPEED, VERY_FAST_BUILD_SPEED }
 var enter_button_power : EnterButtonPower = EnterButtonPower.MIRROR
@@ -112,34 +112,6 @@ var perk_multiple_eightyfive_percent_coverage : float = 2
 var perk_multiple_ninety_percent_coverage : float = 2.75
 var perk_multiple_dual_border_fuzes : float = 1.75
 
-func are_any_unlocks_available() -> bool:
-	if user_data.unlocks_available == 0:
-		return false
-	if !user_data.perk_unlock_allow_backtracking_inner_loop:
-		return true
-	if !user_data.perk_unlock_allow_crossing_inner_loop:
-		return true
-	if !user_data.perk_unlock_two_border_fuzes:
-		return true
-	if !user_data.perk_unlock_eighty_percent_coverage || !user_data.perk_unlock_eightyfive_percent_coverage || !user_data.perk_unlock_ninety_percent_coverage:
-		return true
-	if !user_data.perk_unlock_allow_slow_build || !user_data.perk_unlock_allow_very_slow_build || !user_data.perk_unlock_allow_fast_build || !user_data.perk_unlock_allow_very_fast_build:
-		return true
-	return false
-
-func are_any_configs_unlocked() -> bool:
-	if user_data.perk_unlock_allow_backtracking_inner_loop:
-		return true
-	if user_data.perk_unlock_allow_crossing_inner_loop:
-		return true
-	if user_data.perk_unlock_two_border_fuzes:
-		return true
-	if user_data.perk_unlock_eighty_percent_coverage || user_data.perk_unlock_eightyfive_percent_coverage || user_data.perk_unlock_ninety_percent_coverage:
-		return true
-	if user_data.perk_unlock_allow_slow_build || user_data.perk_unlock_allow_very_slow_build || user_data.perk_unlock_allow_fast_build || user_data.perk_unlock_allow_very_fast_build:
-		return true
-	return false
-
 var tutorial_packed_scene : PackedScene = preload("res://Scenes/tutorial.tscn")
 
 func dismiss_tutorial_control_tab_appears() -> void:
@@ -152,7 +124,7 @@ func get_global_pos_of_center_of_tab(control : Control) -> Vector2:
 	return tab_bar.global_position + tab_rect.position + tab_rect.size / 2
 	
 func setup_config_tab() -> void:
-	if are_any_configs_unlocked():
+	if user_data.are_any_configs_unlocked():
 		show_tab(tab_child_config)
 		if user_data.tutorial_config_tab_appears == false:
 			var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
@@ -233,7 +205,7 @@ func dismiss_tutorial_unlock_tab_appears() -> void:
 
 func setup_unlock_tab() -> void:
 	var picking_disabled : bool = false
-	if are_any_unlocks_available():
+	if user_data.are_any_unlocks_available():
 		show_tab(tab_child_unlock)
 		if user_data.tutorial_unlock_tab_appears == false:
 			var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
@@ -437,7 +409,7 @@ func on_unlock_dual_fuzes_button() -> void:
 func init_state(state_machine: StateMachine) -> void:
 	active_process_mode = self.process_mode
 	our_state_machine = state_machine
-	player_state = PlayerState.UNINITIALIZED
+	player_state = PlayerState.PRE_GAME
 	self.process_mode = ProcessMode.PROCESS_MODE_DISABLED
 	self.hide()
 
@@ -1177,6 +1149,7 @@ func on_scoreboard_name_submit() -> void:
 		return
 	
 	user_data.highscore_name = valid_name
+	game_state_label.text = "Welcome %s" % user_data.highscore_name
 	if save_user_data():
 		scoreboard_name_container.hide()
 		save_highscore()
@@ -1190,7 +1163,7 @@ func save_user_data() -> bool:
 
 func switch_player_state(new_state : PlayerState) -> void:
 	if new_state == PlayerState.PLAYING:
-		if player_state == PlayerState.DEAD || player_state == PlayerState.UNINITIALIZED:
+		if player_state == PlayerState.DEAD || player_state == PlayerState.PRE_GAME:
 			score = 0
 		var start_new_level : bool = player_state != PlayerState.MIRROR_MOVE && player_state != PlayerState.MODAL_TUTORIAL
 		player_state = new_state
@@ -1205,6 +1178,21 @@ func switch_player_state(new_state : PlayerState) -> void:
 	
 	if new_state == PlayerState.MODAL_TUTORIAL:
 		player_state = new_state
+		return
+	
+	if new_state == PlayerState.PRE_GAME:
+		player_state = new_state
+		if !user_data.highscore_name.is_empty():
+			scoreboard_name_container.hide()
+			game_state_label.text = "Welcome %s" % user_data.highscore_name
+		else:
+			scoreboard_name_container.show()
+			game_state_label.text = "Get Ready"
+		restart_label.text = "Start Game"
+		show_tab(tab_child_play)
+		setup_config_tab()
+		setup_unlock_tab()
+		select_tab(tab_child_config, true)
 		return
 
 	if new_state == PlayerState.DEAD:
@@ -1748,7 +1736,10 @@ func init_game() -> void:
 	fraction_of_field_needed = 0.75
 	play_field.hide() # TODO: Move the drawing code to a script running on the play_field
 	
-	switch_player_state(PlayerState.PLAYING)
+	if user_data.are_any_configs_unlocked():
+		switch_player_state(PlayerState.PRE_GAME)
+	else:
+		switch_player_state(PlayerState.PLAYING)
 
 func enter_state() -> void:
 	super.enter_state()
@@ -1800,7 +1791,7 @@ func spam_play_tutorials() -> void:
 		tutorial.init_to_lower_right("While on the border you can hit the\nSPACE bar and travel off the border", pos, dismiss_how_to_play_tutorial)
 		add_child(tutorial)
 		return
-	if user_data.tutorial_which_one_is_the_fuze == false && fuze.get_a_location() != Vector2i.MAX:
+	if user_data.tutorial_which_one_is_the_fuze == false && player_on_outer_lines && fuze.get_a_location() != Vector2i.MAX:
 		user_data.tutorial_which_one_is_the_fuze = true
 		switch_player_state(PlayerState.MODAL_TUTORIAL)
 		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
@@ -1825,7 +1816,7 @@ func spam_play_tutorials() -> void:
 			user_data.tutorial_using_mirror_button = true
 			switch_player_state(PlayerState.MODAL_TUTORIAL)
 			var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
-			var pos : Vector2 = play_field.global_position + (fuze.get_a_location() as Vector2)
+			var pos : Vector2 = enter_button_button.global_position + enter_button_button.size / 2
 			tutorial.init_left("Your ENTER button is currently set to the mirror power.\nHitting ENTER will reverse the map and all the enemy.\nBut it will place you a little randomly. You can use\nthis power to avoid fuzes.", pos, dismiss_how_to_play_tutorial)
 			add_child(tutorial)
 			return

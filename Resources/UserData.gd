@@ -8,17 +8,16 @@ class_name UserData
 @export var unspent_score : float = 0
 @export var points_until_next_unlock_credit : float = 1000
 
+# If you add any unlocks, be sure to add them to the two functions at the bottom
 @export var perk_unlock_allow_backtracking_inner_loop : bool = false
 @export var perk_unlock_allow_crossing_inner_loop : bool = false
 @export var perk_unlock_eighty_percent_coverage : bool = false
 @export var perk_unlock_eightyfive_percent_coverage : bool = false
 @export var perk_unlock_ninety_percent_coverage : bool = false
-
 @export var perk_unlock_allow_slow_build : bool = false
 @export var perk_unlock_allow_very_slow_build : bool = false
 @export var perk_unlock_allow_fast_build : bool = false
 @export var perk_unlock_allow_very_fast_build : bool = false
-
 @export var perk_unlock_two_border_fuzes : bool = false
 
 @export var tutorial_config_tab_appears : bool = false
@@ -37,3 +36,31 @@ class_name UserData
 @export var tutorial_which_how_to_complete_level : bool = false
 @export var tutorial_using_speed_toggles_on_outer_line : bool = false
 @export var tutorial_using_speed_toggles_on_inner_line : bool = false
+
+func are_any_unlocks_available() -> bool:
+	if unlocks_available == 0:
+		return false
+	if !perk_unlock_allow_backtracking_inner_loop:
+		return true
+	if !perk_unlock_allow_crossing_inner_loop:
+		return true
+	if !perk_unlock_two_border_fuzes:
+		return true
+	if !perk_unlock_eighty_percent_coverage || !perk_unlock_eightyfive_percent_coverage || !perk_unlock_ninety_percent_coverage:
+		return true
+	if !perk_unlock_allow_slow_build || !perk_unlock_allow_very_slow_build || !perk_unlock_allow_fast_build || !perk_unlock_allow_very_fast_build:
+		return true
+	return false
+
+func are_any_configs_unlocked() -> bool:
+	if perk_unlock_allow_backtracking_inner_loop:
+		return true
+	if perk_unlock_allow_crossing_inner_loop:
+		return true
+	if perk_unlock_two_border_fuzes:
+		return true
+	if perk_unlock_eighty_percent_coverage || perk_unlock_eightyfive_percent_coverage || perk_unlock_ninety_percent_coverage:
+		return true
+	if perk_unlock_allow_slow_build || perk_unlock_allow_very_slow_build || perk_unlock_allow_fast_build || perk_unlock_allow_very_fast_build:
+		return true
+	return false
