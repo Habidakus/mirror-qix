@@ -19,8 +19,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -36.0
-offset_right = 36.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 10
@@ -33,9 +31,15 @@ layout_mode = 2
 script = ExtResource("2_sdxkw")
 
 [node name="Label" type="Label" parent="MarginContainer/CenterContainer"]
-custom_minimum_size = Vector2(848, 0)
+custom_minimum_size = Vector2(758, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 150
 text = "Mirror Qix"
 horizontal_alignment = 1
 clip_text = true
+
+[node name="Label" type="Label" parent="MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 8
+text = "hit any key to continue"
+horizontal_alignment = 1

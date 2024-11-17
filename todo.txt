@@ -12,3 +12,4 @@
 
 - able to switch to highscore from post-game page
 - add controller support
+- bug in not putting up tutorial about colliding with red line
