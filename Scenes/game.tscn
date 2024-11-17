@@ -45,7 +45,7 @@ theme_override_constants/separation = 10
 [node name="TabContainer" type="TabContainer" parent="MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-current_tab = 3
+current_tab = 1
 
 [node name="Controls" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
 visible = false
@@ -336,7 +336,6 @@ volume_db = -10.0
 [node name="FuzeSpeaker" type="AudioStreamPlayer" parent="MarginContainer/HBoxContainer/TabContainer/Controls"]
 
 [node name="Config" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
-visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
@@ -634,6 +633,7 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="Play" type="CenterContainer" parent="MarginContainer/HBoxContainer/TabContainer"]
+visible = false
 layout_mode = 2
 metadata/_tab_index = 3
 

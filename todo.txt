@@ -10,5 +10,3 @@
 - green dot respawns tired, and speeds up as it recovers
 - implement https://en.wikipedia.org/wiki/Rapidly-exploring_random_tree when hunting player draw paths for advanced hunters
 - add controller support
-
-- add meta-data to high scores

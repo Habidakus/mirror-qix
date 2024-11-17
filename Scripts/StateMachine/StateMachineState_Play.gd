@@ -1180,7 +1180,14 @@ func set_unlock_progress_bar(value : float) -> void:
 
 func save_highscore() -> void:
 	if !user_data.highscore_name.is_empty():
-		SilentWolf.Scores.save_score(user_data.highscore_name, score)
+		var metadata : Dictionary = {}
+		metadata["hunter"] = HunterEnemyType.keys()[hunter_enemy_type]
+		metadata["fuze_count"] = number_of_enemy_border_fuzes
+		metadata["coverage"] = round(fraction_of_field_needed * 100)
+		metadata["power"] = EnterButtonPower.keys()[enter_button_power]
+		metadata["protection"] = InnerLoopProtection.keys()[perk_inner_loop_protection]
+		metadata["tier"] = difficulty_tier
+		SilentWolf.Scores.save_score(user_data.highscore_name, score, "main", metadata)
 		scoreboard_name_container.hide()
 		show_high_score_list_button.show()
 		return
