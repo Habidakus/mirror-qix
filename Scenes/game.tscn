@@ -346,7 +346,9 @@ layout_mode = 2
 [node name="BuildLineConfig" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/BuildLineConfig"]
 layout_mode = 2
@@ -361,14 +363,12 @@ text = "Build line protections:
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 
-[node name="Control4" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
-custom_minimum_size = Vector2(0, 20)
-layout_mode = 2
-
 [node name="SpaceBarConfig" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/SpaceBarConfig"]
 layout_mode = 2
@@ -383,14 +383,12 @@ text = "SPACE BAR build speed:
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 
-[node name="Control8" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
-custom_minimum_size = Vector2(0, 20)
-layout_mode = 2
-
 [node name="BorderEnemyConfig" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/BorderEnemyConfig"]
 layout_mode = 2
@@ -405,14 +403,31 @@ text = "Border Enemies:
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 
-[node name="Control5" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
-custom_minimum_size = Vector2(0, 20)
+[node name="HunterEnemyConfig" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
 layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/HunterEnemyConfig"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Config/HunterEnemyConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Hunter Enemies:"
+
+[node name="OptionButton" type="OptionButton" parent="MarginContainer/HBoxContainer/TabContainer/Config/HunterEnemyConfig/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
 
 [node name="EnterConfig" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/EnterConfig"]
 layout_mode = 2
@@ -426,14 +441,12 @@ text = "ENTER/TAB Power:"
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 
-[node name="Control3" type="Control" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
-custom_minimum_size = Vector2(0, 20)
-layout_mode = 2
-
 [node name="AreaCoverNeeded" type="MarginContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/TabContainer/Config/AreaCoverNeeded"]
 layout_mode = 2
@@ -490,13 +503,21 @@ layout_mode = 2
 [node name="Label4" type="Label" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
-text = "You can face harder border fuzes:"
+text = "You can face more difficult enemies:"
 horizontal_alignment = 1
 
 [node name="UnlockDualFuzes" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "There will be two boarder fuzes -- x1.75 score"
+flat = true
+alignment = 2
+autowrap_mode = 2
+
+[node name="UnlockAngryRover" type="CheckButton" parent="MarginContainer/HBoxContainer/TabContainer/Unlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Replace Qix with Angry Rover"
 flat = true
 alignment = 2
 autowrap_mode = 2

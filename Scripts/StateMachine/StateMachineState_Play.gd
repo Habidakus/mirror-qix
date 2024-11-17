@@ -76,6 +76,7 @@ var build_speed_very_slow_button : Button = null
 var build_speed_fast_button : Button = null
 var build_speed_very_fast_button : Button = null
 var unlock_dual_fuzes_button : Button = null
+var unlock_angry_rover_button : Button = null
 var area_covered_config_section : Control = null
 var coverage_option_button : OptionButton = null
 var cover_eighty_percent_button : Button = null
@@ -83,6 +84,8 @@ var cover_eightyfive_percent_button : Button = null
 var cover_ninety_percent_button : Button = null
 var border_enemy_config_section : Control = null
 var border_enemy_option_button : OptionButton = null
+var hunter_enemy_config_section : Control = null
+var hunter_enemy_option_button : OptionButton = null
 
 var persistant_user_data : String = "user://qix_user_data.tres"
 var user_data : UserData = null
@@ -101,10 +104,15 @@ var mirror_power_cooldown : float = 10.0
 
 var number_of_enemy_border_fuzes : int = 1
 
-var increase_in_unlock_cost_per_unlock : float = 2.0
-# TODO: Organize these into sets of resources
+var increase_in_unlock_cost_per_unlock : float = 1.75
+
 enum InnerLoopProtection { NONE, FULL, BACKUP }
 var perk_inner_loop_protection : InnerLoopProtection = InnerLoopProtection.FULL
+
+enum HunterEnemyType { QIX, ANGRY_ROVER }
+var hunter_enemy_type : HunterEnemyType = HunterEnemyType.QIX
+
+# TODO: Organize these into sets of resources
 var perk_multiple_stop_backtracking_inner_loop : float = 1.15
 var perk_multiple_no_inner_loop_protection : float = 1.25
 var perk_multiple_eighty_percent_coverage : float = 1.5
@@ -163,6 +171,15 @@ func setup_config_tab() -> void:
 		border_enemy_option_button.selected = border_enemy_option_button.get_item_index(number_of_enemy_border_fuzes)
 	else:
 		border_enemy_config_section.hide()
+	
+	if user_data.perk_unlock_angry_rover:
+		hunter_enemy_config_section.show()
+		hunter_enemy_option_button.clear()
+		hunter_enemy_option_button.add_item("Hunted by the Qix", HunterEnemyType.QIX)
+		hunter_enemy_option_button.add_item("Hunted by the Angry Rover", HunterEnemyType.ANGRY_ROVER)
+		hunter_enemy_option_button.selected = hunter_enemy_option_button.get_item_index(hunter_enemy_type)
+	else:
+		hunter_enemy_config_section.hide()
 	
 	if user_data.perk_unlock_allow_slow_build || user_data.perk_unlock_allow_very_slow_build || user_data.perk_unlock_allow_fast_build || user_data.perk_unlock_allow_very_fast_build:
 		enter_config_section.show()
@@ -241,6 +258,12 @@ func setup_unlock_tab() -> void:
 	else:
 		unlock_dual_fuzes_button.button_pressed = false
 		unlock_dual_fuzes_button.disabled = picking_disabled
+	if user_data.perk_unlock_angry_rover:
+		unlock_angry_rover_button.button_pressed = true
+		unlock_angry_rover_button.disabled = true
+	else:
+		unlock_angry_rover_button.button_pressed = false
+		unlock_angry_rover_button.disabled = picking_disabled
 		
 	# Build speed unlocks
 	if user_data.perk_unlock_allow_slow_build:
@@ -326,6 +349,9 @@ func on_enter_power_option_button(index : int) -> void:
 func on_border_enemy_option_button(index : int) -> void:
 	number_of_enemy_border_fuzes = border_enemy_option_button.get_item_id(index)
 
+func on_hunter_enemy_option_button(index : int) -> void:
+	hunter_enemy_type = hunter_enemy_option_button.get_item_id(index) as HunterEnemyType
+
 func on_build_path_backup_button() -> void:
 	if user_data.perk_unlock_allow_backtracking_inner_loop == false:
 		user_data.perk_unlock_allow_backtracking_inner_loop = true
@@ -401,6 +427,14 @@ func on_build_very_fast_button() -> void:
 func on_unlock_dual_fuzes_button() -> void:
 	if user_data.perk_unlock_two_border_fuzes == false:
 		user_data.perk_unlock_two_border_fuzes = true
+		user_data.unlocks_available -= 1
+		save_user_data()
+		setup_config_tab()
+		setup_unlock_tab()
+
+func on_unlock_angry_rover_button() -> void:
+	if user_data.perk_unlock_angry_rover == false:
+		user_data.perk_unlock_angry_rover = true
 		user_data.unlocks_available -= 1
 		save_user_data()
 		setup_config_tab()
@@ -1461,6 +1495,9 @@ func _draw() -> void:
 	for line : Array in inner_lines:
 		draw_line(offset + (line[0] as Vector2), offset + (line[1] as Vector2), Color.RED)
 	
+	if player_state == PlayerState.PRE_GAME:
+		return
+		
 	var player_length : int = 4
 	var rp : int = round(rotate_player) as int
 	var p_loc : Vector2 = offset + (player_pos as Vector2)
@@ -1471,8 +1508,10 @@ func _draw() -> void:
 		draw_line(p_loc - Vector2(player_length, player_length), p_loc + Vector2(player_length, player_length), Color.BLUE)
 		draw_line(p_loc - Vector2(-player_length, player_length), p_loc + Vector2(-player_length, player_length), Color.BLUE)
 	
-	enemy.render(offset)
-	fuze.render(offset)
+	if enemy != null:
+		enemy.render(offset)
+	if fuze != null:
+		fuze.render(offset)
 
 func is_in_claimed_area(x : int, y : int) -> bool:
 	if x < 0 || y < 0 || x >= play_field.size.x || y >= play_field.size.y:
@@ -1623,10 +1662,15 @@ func resume_game() -> void:
 	player_pos = Vector2(0, play_field.size.y / 2)
 	player_forbidden_movement = Vector2i.ZERO
 	player_travel_speaker.stop()
-	
-	if enemy == null:
+
+	if enemy != null:
+		enemy.queue_free()
+		
+	if hunter_enemy_type == HunterEnemyType.QIX:
 		enemy = EnemyRainbow.new()
-		add_child(enemy)
+	else:
+		enemy = EnemyDwarf.new()
+	add_child(enemy)
 	enemy.init(self, difficulty_tier)
 	
 	if fuze != null:
@@ -1701,6 +1745,7 @@ func init_game() -> void:
 	build_speed_fast_button = tab_child_unlock.find_child("UnlockFastBuildMode") as Button
 	build_speed_very_fast_button = tab_child_unlock.find_child("UnlockExtraFastBuildMode") as Button
 	unlock_dual_fuzes_button = tab_child_unlock.find_child("UnlockDualFuzes") as Button
+	unlock_angry_rover_button = tab_child_unlock.find_child("UnlockAngryRover") as Button
 	area_covered_config_section = tab_child_config.find_child("AreaCoverNeeded")
 	coverage_option_button = area_covered_config_section.find_child("OptionButton")
 	cover_eighty_percent_button = tab_child_unlock.find_child("UnlockEightyPercent") as Button
@@ -1713,6 +1758,8 @@ func init_game() -> void:
 	fuze_speaker = tab_child_controls.find_child("FuzeSpeaker") as AudioStreamPlayer
 	border_enemy_config_section = tab_child_config.find_child("BorderEnemyConfig")
 	border_enemy_option_button = border_enemy_config_section.find_child("OptionButton")
+	hunter_enemy_config_section = tab_child_config.find_child("HunterEnemyConfig")
+	hunter_enemy_option_button = hunter_enemy_config_section.find_child("OptionButton")
 
 	build_protection_option_button.item_selected.connect(on_build_protection_option_button)
 	build_path_backup_button.pressed.connect(on_build_path_backup_button)
@@ -1728,7 +1775,9 @@ func init_game() -> void:
 	scoreboard_name_submit.pressed.connect(on_scoreboard_name_submit)
 	enter_power_option_button.item_selected.connect(on_enter_power_option_button)
 	unlock_dual_fuzes_button.pressed.connect(on_unlock_dual_fuzes_button)
+	unlock_angry_rover_button.pressed.connect(on_unlock_angry_rover_button)
 	border_enemy_option_button.item_selected.connect(on_border_enemy_option_button)
+	hunter_enemy_option_button.item_selected.connect(on_hunter_enemy_option_button)
 	
 	#(player_travel_speaker.stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_PINGPONG
 	

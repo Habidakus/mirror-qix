@@ -19,6 +19,7 @@ class_name UserData
 @export var perk_unlock_allow_fast_build : bool = false
 @export var perk_unlock_allow_very_fast_build : bool = false
 @export var perk_unlock_two_border_fuzes : bool = false
+@export var perk_unlock_angry_rover : bool = false
 
 @export var tutorial_config_tab_appears : bool = false
 @export var tutorial_unlock_tab_appears : bool = false
@@ -44,7 +45,7 @@ func are_any_unlocks_available() -> bool:
 		return true
 	if !perk_unlock_allow_crossing_inner_loop:
 		return true
-	if !perk_unlock_two_border_fuzes:
+	if !perk_unlock_two_border_fuzes || !perk_unlock_angry_rover:
 		return true
 	if !perk_unlock_eighty_percent_coverage || !perk_unlock_eightyfive_percent_coverage || !perk_unlock_ninety_percent_coverage:
 		return true
@@ -57,7 +58,7 @@ func are_any_configs_unlocked() -> bool:
 		return true
 	if perk_unlock_allow_crossing_inner_loop:
 		return true
-	if perk_unlock_two_border_fuzes:
+	if perk_unlock_two_border_fuzes || perk_unlock_angry_rover:
 		return true
 	if perk_unlock_eighty_percent_coverage || perk_unlock_eightyfive_percent_coverage || perk_unlock_ninety_percent_coverage:
 		return true
