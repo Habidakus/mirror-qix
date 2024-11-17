@@ -63,7 +63,7 @@ func move_all_agents(delta : float) -> void:
 			elif current_state_A == FuzeState.RESPAWNING:
 				play_state.play_fuze_respawn()
 			elif pos_on_field_A == play_state.player_pos:
-				play_state.on_player_death()
+				play_state.on_player_death(play_state.CauseOfDeath.FUSE)
 
 	if current_state_B == FuzeState.RESPAWNING:
 		respawn_remaining_B -= delta
@@ -80,7 +80,7 @@ func move_all_agents(delta : float) -> void:
 			elif current_state_B == FuzeState.RESPAWNING:
 				play_state.play_fuze_respawn()
 			elif pos_on_field_B == play_state.player_pos:
-				play_state.on_player_death()
+				play_state.on_player_death(play_state.CauseOfDeath.FUSE)
 
 func is_this_location_death(x : int, y : int) -> bool:
 	if x == pos_on_field_A.x && y == pos_on_field_A.y:
@@ -88,7 +88,25 @@ func is_this_location_death(x : int, y : int) -> bool:
 	if x == pos_on_field_B.x && y == pos_on_field_B.y:
 		return true
 	return false
-	
+
+func get_distance_from_player() -> int:
+	var dist_A : int = 2500
+	if current_state_A != FuzeState.RESPAWNING:
+		dist_A = play_state.get_distance_to_player(pos_on_field_A, 1)
+	var dist_B : int = 2500
+	if current_state_B != FuzeState.RESPAWNING:
+		dist_B = play_state.get_distance_to_player(pos_on_field_B, -1)
+	return min(dist_A, dist_B)
+
+func get_a_location() -> Vector2i:
+	if current_state_A == FuzeState.RESPAWNING:
+		if current_state_B == FuzeState.RESPAWNING:
+			return Vector2i.MAX
+		else:
+			return pos_on_field_B
+	else:
+		return pos_on_field_A
+
 func render(offset : Vector2) -> void:
 	render_unit(offset, pos_on_field_A, current_state_A, respawn_remaining_A)
 	render_unit(offset, pos_on_field_B, current_state_B, respawn_remaining_B)

@@ -24,6 +24,12 @@ func is_this_location_death(_x : int, _y : int) -> bool:
 	return true
 func render(_offset : Vector2) -> void:
 	assert(false, "needs to be implemented in child class")
+func get_a_location() -> Vector2i:
+	assert(false, "needs to be implemented in child class")
+	return Vector2i.MAX
+func get_distance_from_player() -> int:
+	assert(false, "needs to be implemented in child class")
+	return 500 * 5
 	
 func init(ps : PlayState, tier : int) -> void:
 	play_state = ps
@@ -42,7 +48,7 @@ func advance_along(start : Vector2i, end : Vector2i, pos : Vector2i, adv : int) 
 func get_new_pos(field_pos : Vector2i, dir : int) -> Vector2i:
 	for i in range(0, play_state.outer_lines.size()):
 		var line = play_state.outer_lines[i]
-		if play_state.on_line(field_pos.x, field_pos.y, line[0], line[1]):
+		if PlayState.on_line(field_pos.x, field_pos.y, line[0], line[1]):
 			if dir > 0 && field_pos == line[1]:
 				var n : int = (i + 1) % play_state.outer_lines.size()
 				var start : Vector2i = play_state.outer_lines[n][0]

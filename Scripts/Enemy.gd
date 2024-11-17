@@ -20,6 +20,9 @@ var respawn_remaining : float
 var max_stun_time : float = 3
 var stun_remaining : float
 
+func is_alive() -> bool:
+	return current_enemy_state == EnemyState.MOVING || current_enemy_state == EnemyState.HUNTING
+
 func set_pending_mirror_coordinates() -> void:
 	mirror_start_pos = pos_on_field
 	mirror_end_pos = play_state.mirror_v2i(pos_on_field)
@@ -129,6 +132,9 @@ func render(offset : Vector2) -> void:
 		var color : Color = Color(Color.DARK_VIOLET, alpha)
 		play_state.draw_circle(loc, dead_radius, color)
 
+func get_death_spot() -> Vector2i:
+	return pos_on_field
+
 func move_enemy(delta : float) -> void:
 	if current_enemy_state == EnemyState.TRAPPED || current_enemy_state == EnemyState.RESPAWNING:
 		return
@@ -151,7 +157,7 @@ func move_enemy(delta : float) -> void:
 		pos_on_field = next_pos
 
 		if play_state.is_on_inner_line(pos_on_field.x, pos_on_field.y):
-			play_state.on_player_death()
+			play_state.on_player_death(play_state.CauseOfDeath.HUNTER)
 			return
 	
 		if pos_on_field == goal_pos:

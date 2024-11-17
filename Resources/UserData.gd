@@ -24,3 +24,14 @@ class_name UserData
 @export var tutorial_config_tab_appears : bool = false
 @export var tutorial_unlock_tab_appears : bool = false
 @export var tutorial_switch_back_to_play_tab : bool = false
+@export var tutorial_cause_of_death_fuze : bool = false
+@export var tutorial_cause_of_death_hunter : bool = false
+@export var tutorial_cause_of_death_crossing_the_line : bool = false
+@export var tutorial_which_one_is_me : bool = false
+@export var tutorial_which_one_is_the_fuze : bool = false
+@export var tutorial_which_one_is_the_enemy : bool = false
+@export var tutorial_trail_protection : bool = false
+@export var tutorial_building_with_space_bar : bool = false
+@export var tutorial_using_mirror_button : bool = false
+@export var tutorial_which_how_to_capture_area : bool = false
+@export var tutorial_which_how_to_complete_level : bool = false

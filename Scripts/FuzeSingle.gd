@@ -55,7 +55,19 @@ func move_all_agents(delta : float) -> void:
 			print("Fuze teleported")
 		
 		if pos_on_field == play_state.player_pos:
-			play_state.on_player_death()
+			play_state.on_player_death(play_state.CauseOfDeath.FUSE)
+
+func get_a_location() -> Vector2i:
+	if current_state == FuzeState.RESPAWNING:
+		return Vector2i.MAX
+	else:
+		return pos_on_field
+
+func get_distance_from_player() -> int:
+	if current_state == FuzeState.RESPAWNING:
+		return 2500
+	else:
+		return play_state.get_distance_to_player(pos_on_field, 1)
 
 func is_this_location_death(x : int, y : int) -> bool:
 	return x == pos_on_field.x && y == pos_on_field.y

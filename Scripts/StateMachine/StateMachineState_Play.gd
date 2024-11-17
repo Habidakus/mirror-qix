@@ -9,7 +9,8 @@ class_name PlayState
 @export var player_speed_outer : float = 150
 var enter_button_power_build_speed_on : bool = false
 
-enum PlayerState { UNINITIALIZED, PLAYING, DEAD, WON_PAUSE, MIRROR_MOVE }
+enum CauseOfDeath { FUSE, HUNTER, CROSSING_INNER_LINE }
+enum PlayerState { UNINITIALIZED, PLAYING, DEAD, WON_PAUSE, MIRROR_MOVE, MODAL_TUTORIAL }
 var player_state : PlayerState = PlayerState.UNINITIALIZED
 
 enum EnterButtonPower { MIRROR, SLOW_BUILD_SPEED, VERY_SLOW_BUILD_SPEED, FAST_BUILD_SPEED, VERY_FAST_BUILD_SPEED }
@@ -470,6 +471,13 @@ func add_player_direction(dx : float, dy : float) -> void:
 		if player_forbidden_movement != Vector2i.ZERO && dxy_direction == player_forbidden_movement:
 			player_movement = Vector2.ZERO
 			player_travel_speaker.set_pitch_scale(player_stopped_pitch_scale)
+			if user_data.tutorial_trail_protection == false:
+				user_data.tutorial_trail_protection = true
+				switch_player_state(PlayerState.MODAL_TUTORIAL)
+				var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+				var pos : Vector2 = play_field.global_position + (player_pos as Vector2)
+				tutorial.init_left("You have bumped into your own trail.\nIn some advanced modes this would cause you to die,\nbut not this time.", pos, dismiss_how_to_play_tutorial)
+				add_child(tutorial)
 			return
 	if m.x < 0 || m.y < 0:
 		# if either m is negative, we've switched directions along an axis, so
@@ -481,6 +489,15 @@ func add_player_direction(dx : float, dy : float) -> void:
 	player_travel_speaker.set_pitch_scale(player_moving_pitch_scale)
 	player_movement += Vector2(dx, dy)
 	player_forbidden_movement = dxy_direction * -1
+	
+	if user_data.tutorial_which_how_to_capture_area == false && !player_on_outer_lines:
+		if inner_lines.size() > 1 && distance_between_two_points_on_path(inner_lines, inner_lines[0][1], player_pos) > 50:
+			user_data.tutorial_which_how_to_capture_area = true
+			switch_player_state(PlayerState.MODAL_TUTORIAL)
+			var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+			var pos : Vector2 = play_field.global_position + (player_pos as Vector2)
+			tutorial.init_left("Now that you're drawing a line, loop back to\nthe outer white line to capture some area.", pos, dismiss_how_to_play_tutorial)
+			add_child(tutorial)
 
 	var can_continue : bool = true
 	while can_continue:
@@ -499,7 +516,7 @@ func add_player_direction(dx : float, dy : float) -> void:
 		else:
 			can_continue = false
 
-func on_line(x : int, y : int, start : Vector2i, end : Vector2i) -> bool:
+static func on_line(x : int, y : int, start : Vector2i, end : Vector2i) -> bool:
 	if start.x == end.x and start.x == x:
 		if start.y == y || end.y == y:
 			return true;
@@ -1052,7 +1069,7 @@ func move_if_possible(x : int, y : int) -> bool: # returns true if we can contin
 	if abs(player_pos.x - x) > 1 || abs(player_pos.y - y) > 1:
 		assert(false)
 	if fuze.is_this_location_death(x, y):
-		on_player_death()
+		on_player_death(CauseOfDeath.FUSE)
 		return false
 	if player_on_outer_lines:
 		if is_on_outer_line(x, y):
@@ -1066,7 +1083,7 @@ func move_if_possible(x : int, y : int) -> bool: # returns true if we can contin
 		return false
 	if is_on_inner_line(x, y):
 		if perk_inner_loop_protection != InnerLoopProtection.FULL:
-			on_player_death()
+			on_player_death(CauseOfDeath.CROSSING_INNER_LINE)
 		return false
 	if does_extend_line(x, y, inner_lines.back()[0], inner_lines.back()[1]):
 		inner_lines.back()[1] = Vector2i(x, y)
@@ -1142,7 +1159,7 @@ func switch_player_state(new_state : PlayerState) -> void:
 	if new_state == PlayerState.PLAYING:
 		if player_state == PlayerState.DEAD || player_state == PlayerState.UNINITIALIZED:
 			score = 0
-		var start_new_level : bool = player_state != PlayerState.MIRROR_MOVE
+		var start_new_level : bool = player_state != PlayerState.MIRROR_MOVE && player_state != PlayerState.MODAL_TUTORIAL
 		player_state = new_state
 		if start_new_level:
 			resume_game()
@@ -1151,6 +1168,10 @@ func switch_player_state(new_state : PlayerState) -> void:
 	if new_state == PlayerState.MIRROR_MOVE:
 		player_state = new_state
 		trigger_mirror_power()
+		return
+	
+	if new_state == PlayerState.MODAL_TUTORIAL:
+		player_state = new_state
 		return
 
 	if new_state == PlayerState.DEAD:
@@ -1191,6 +1212,8 @@ func _process(delta: float) -> void:
 	if area_covered >= area_needed:
 		switch_player_state(PlayerState.WON_PAUSE)
 		return
+	
+	spam_play_tutorials()
 	
 	if enter_button_cooldown > 0:
 		enter_button_cooldown -= delta
@@ -1443,6 +1466,25 @@ func get_path_length(path : Array) -> int:
 		dist += (line[0] - line[1]).length()
 	return dist
 
+static func distance_between_two_points_on_path(path : Array, start : Vector2i, end : Vector2i) -> int:
+	for i in range(0, path.size()):
+		if on_line(start.x, start.y, path[i][0], path[i][1]):
+			var dist_start_to_path_end : int = abs(start.x - path[i][1].x) + abs(start.y - path[i][1].y)
+			if on_line(end.x, end.y, path[i][0], path[i][1]):
+				var dist_end_to_path_end : int = abs(end.x - path[i][1].x) + abs(end.y - path[i][1].y)
+				if dist_end_to_path_end <= dist_start_to_path_end:
+					return abs(start.x - end.x) + abs(start.y - end.y)
+			var total_dist : int = dist_start_to_path_end
+			for j in range(1, path.size() + 1):
+				var n : int = (i + j) % path.size()
+				if on_line(end.x, end.y, path[n][0], path[n][1]):
+					var dist_path_start_to_end : int = abs(end.x - path[n][0].x) + abs(end.y - path[n][0].y)
+					return total_dist + dist_path_start_to_end
+				else:
+					total_dist += abs(path[n][1].x - path[n][0].x) + abs(path[n][1].y - path[n][0].y)
+	assert(false, "Should never happen")
+	return 500 * 4
+
 func half_way_around_outer_line(pos : Vector2i) -> Vector2i:
 	assert(is_on_outer_line(pos.x, pos.y))
 	for i in range(0, outer_lines.size()):
@@ -1465,6 +1507,21 @@ func half_way_around_outer_line(pos : Vector2i) -> Vector2i:
 				dist -= line_length
 	assert(false)
 	return outer_lines[0][0]
+
+func get_distance_to_player(pos : Vector2i, dir : int) -> int:
+	if !is_on_outer_line(pos.x, pos.y):
+		print("Not on outer line")
+		return 2500
+	if player_on_outer_lines:
+		if dir > 0:
+			return distance_between_two_points_on_path(outer_lines, pos, player_pos)
+		else:
+			return distance_between_two_points_on_path(outer_lines, player_pos, pos)
+	else:
+		if dir > 0:
+			return distance_between_two_points_on_path(outer_lines, pos, inner_lines.front()[0])
+		else:
+			return distance_between_two_points_on_path(outer_lines, inner_lines.front()[0], pos)
 
 func point_opposite_player() -> Vector2i:
 	if player_on_outer_lines:
@@ -1684,7 +1741,97 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		get_tree().quit()
 
-func on_player_death() -> void:
+func dismiss_how_to_play_tutorial() -> void:
+	switch_player_state(PlayerState.PLAYING)
+	
+func spam_play_tutorials() -> void:
+	if player_state != PlayerState.PLAYING:
+		return
+		
+	if user_data.tutorial_which_one_is_me == false:
+		user_data.tutorial_which_one_is_me = true
+		switch_player_state(PlayerState.MODAL_TUTORIAL)
+		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+		var pos : Vector2 = play_field.global_position + (player_pos as Vector2)
+		tutorial.init_to_lower_right("This is you.\nYou can move along the border using the WASD keys.", pos, dismiss_how_to_play_tutorial)
+		add_child(tutorial)
+		return
+	if user_data.tutorial_building_with_space_bar == false:
+		user_data.tutorial_building_with_space_bar = true
+		switch_player_state(PlayerState.MODAL_TUTORIAL)
+		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+		var pos : Vector2 = play_field.global_position + (player_pos as Vector2)
+		tutorial.init_to_lower_right("While on the border you can hit the\nSPACE bar and travel off the border", pos, dismiss_how_to_play_tutorial)
+		add_child(tutorial)
+		return
+	if user_data.tutorial_which_one_is_the_fuze == false && fuze.get_a_location() != Vector2i.MAX:
+		user_data.tutorial_which_one_is_the_fuze = true
+		switch_player_state(PlayerState.MODAL_TUTORIAL)
+		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+		var pos : Vector2 = play_field.global_position + (fuze.get_a_location() as Vector2)
+		tutorial.init_left("This is a fuze. While travelling on the\nborder you must avoid this green opponent.", pos, dismiss_how_to_play_tutorial)
+		add_child(tutorial)
+		return
+	if user_data.tutorial_which_one_is_the_enemy == false && !player_on_outer_lines:
+		if enemy.is_alive():
+			var dist_from_enemy_squared : float = (player_pos - enemy.pos_on_field).length_squared()
+			var inner_path_dist = get_path_length(inner_lines)
+			if dist_from_enemy_squared <= (inner_path_dist * inner_path_dist):
+				user_data.tutorial_which_one_is_the_enemy = true
+				switch_player_state(PlayerState.MODAL_TUTORIAL)
+				var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+				var pos : Vector2 = play_field.global_position + (enemy.pos_on_field as Vector2)
+				tutorial.init_left("This is an enemy. While building a\npath to capture area you must not let\nthem hit the red path you are drawing.", pos, dismiss_how_to_play_tutorial)
+				add_child(tutorial)
+				return
+	if user_data.tutorial_using_mirror_button == false && enter_button_power == EnterButtonPower.MIRROR:
+		if player_on_outer_lines && enter_button_cooldown <= 0 && fuze.get_distance_from_player() < 250:
+			user_data.tutorial_using_mirror_button = true
+			switch_player_state(PlayerState.MODAL_TUTORIAL)
+			var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+			var pos : Vector2 = play_field.global_position + (fuze.get_a_location() as Vector2)
+			tutorial.init_left("Your ENTER button is currently set to the mirror power.\nHitting ENTER will reverse the map and all the enemy.\nBut it will place you a little randomly. You can use\nthis power to avoid fuzes.", pos, dismiss_how_to_play_tutorial)
+			add_child(tutorial)
+			return
+	if user_data.tutorial_which_how_to_capture_area == true && user_data.tutorial_which_how_to_complete_level == false && area_covered > 0:
+		user_data.tutorial_which_how_to_complete_level = true
+		switch_player_state(PlayerState.MODAL_TUTORIAL)
+		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+		var pos : Vector2 = progress_bar.global_position + progress_bar.size / 2
+		tutorial.init_to_lower_right("As you capture area, you will get closer\nand closer to completing the level.", pos, dismiss_how_to_play_tutorial)
+		add_child(tutorial)
+		return
+
+func dismiss_cause_of_death_tutorial() -> void:
+	enter_dead_state()
+	
+func on_player_death(cause_of_death : CauseOfDeath) -> void:
+	if cause_of_death == CauseOfDeath.FUSE && user_data.tutorial_cause_of_death_fuze == false:
+		user_data.tutorial_cause_of_death_fuze = true
+		switch_player_state(PlayerState.MODAL_TUTORIAL)
+		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+		var pos : Vector2 = play_field.global_position + (player_pos as Vector2)
+		tutorial.init_left("You have died because a fuze\ncaught up with you.", pos, dismiss_cause_of_death_tutorial)
+		add_child(tutorial)
+	elif cause_of_death == CauseOfDeath.HUNTER && user_data.tutorial_cause_of_death_hunter == false:
+		user_data.tutorial_cause_of_death_hunter = true
+		switch_player_state(PlayerState.MODAL_TUTORIAL)
+		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+		var pos : Vector2 = play_field.global_position + (enemy.get_death_spot() as Vector2)
+		tutorial.init_left("You have died because a hunter\nhas reached your build trail.", pos, dismiss_cause_of_death_tutorial)
+		add_child(tutorial)
+	elif cause_of_death == CauseOfDeath.CROSSING_INNER_LINE && user_data.tutorial_cause_of_death_crossing_the_line == false:
+		user_data.tutorial_cause_of_death_crossing_the_line = true
+		switch_player_state(PlayerState.MODAL_TUTORIAL)
+		var tutorial : TutorialDialog = tutorial_packed_scene.instantiate()
+		var pos : Vector2 = play_field.global_position + (player_pos as Vector2)
+		tutorial.init_left("You have died because you have tragically\ncollided with your own build trail.", pos, dismiss_cause_of_death_tutorial)
+		add_child(tutorial)
+	else:
+		enter_dead_state()
+
+func enter_dead_state() -> void:
+	assert(player_state == PlayerState.PLAYING || player_state == PlayerState.MODAL_TUTORIAL)
 	switch_player_state(PlayerState.DEAD)
 	player_travel_speaker.stop()
 	play_player_death()
