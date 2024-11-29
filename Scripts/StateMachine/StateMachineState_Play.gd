@@ -1272,6 +1272,7 @@ func switch_player_state(new_state : PlayerState) -> void:
 		setup_unlock_tab()
 		save_highscore()
 		difficulty_tier = 0
+		set_shader_hue(185)
 		select_tab(tab_child_play, true)
 		return
 		
@@ -1281,6 +1282,7 @@ func switch_player_state(new_state : PlayerState) -> void:
 		game_state_label.text = "Nicely Done"
 		restart_label.text = "Continue"
 		difficulty_tier += 1
+		set_shader_hue((360 + 185 - difficulty_tier * 20) % 360)
 		player_state = new_state
 		scoreboard_name_container.hide()
 		show_tab(tab_child_play)
@@ -1817,6 +1819,7 @@ func init_game() -> void:
 	set_unlock_progress_bar(user_data.unspent_score / user_data.points_until_next_unlock_credit)
 	
 	difficulty_tier = 0
+	set_shader_hue(185)
 	fraction_of_field_needed = 0.75
 	play_field.hide() # TODO: Move the drawing code to a script running on the play_field
 	
@@ -1844,9 +1847,33 @@ func leave_state(next_state : String) -> void:
 		var destination_color : Color = Color(Color.WHITE, 0)
 		leave_tween.tween_property(self, "modulate", destination_color, fade_time)
 		await leave_tween.finished
+		reset_background()
 		our_state_machine.switch_state(next_state)
 	else:
 		our_state_machine.switch_state(next_state)
+		reset_background()
+
+func set_shader_hue(hue : float) -> void:
+	var background = (%Background as ColorRect)
+	var shader_material = (background.material as ShaderMaterial)
+	var current_color = shader_material.get_shader_parameter("color_a")
+	var tween = get_tree().create_tween()
+	
+	# Frankly I was not expecting the type of "color_a" to change durring the lifetime of the shader
+	if current_color is Vector4:
+		var vec_to_color : Color = Color(current_color[0], current_color[1], current_color[2], current_color[3])
+		tween.tween_method(set_background_shader_color, vec_to_color.h * 360, hue, 1)
+	elif current_color is Color:
+		tween.tween_method(set_background_shader_color, current_color.h * 360, hue, 1)
+
+func set_background_shader_color(hue: float):
+	var background = (%Background as ColorRect)
+	var shader_material = (background.material as ShaderMaterial)
+	var color : Color = Color.from_hsv(hue / 360, 90.0 / 100, 33.0 / 100, 1)
+	shader_material.set_shader_parameter("color_a", Vector4(color.r, color.g, color.b, color.a))
+
+func reset_background() -> void:
+	set_shader_hue(185);
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:

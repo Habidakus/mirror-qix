@@ -1,11 +1,27 @@
-[gd_scene load_steps=7 format=3 uid="uid://byexcr20v7axg"]
+[gd_scene load_steps=11 format=3 uid="uid://byexcr20v7axg"]
 
+[ext_resource type="Shader" path="res://Art/clouds.gdshader" id="1_g1gxk"]
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachine.gd" id="1_srbky"]
 [ext_resource type="PackedScene" uid="uid://dau303qc0rqdx" path="res://Scenes/splash_screen.tscn" id="2_xfvew"]
 [ext_resource type="PackedScene" uid="uid://cwrsudv7wrkrs" path="res://Scenes/menu.tscn" id="3_yptd7"]
 [ext_resource type="PackedScene" uid="uid://tjx3dhrtasq8" path="res://Scenes/game.tscn" id="4_jnww5"]
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_AnyKeyToContinue.gd" id="5_qycan"]
 [ext_resource type="Script" path="res://Scripts/StateMachine/StateMachineState_HighScore.gd" id="6_q52r6"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_mr2ks"]
+
+[sub_resource type="NoiseTexture3D" id="NoiseTexture3D_v4ro6"]
+seamless = true
+seamless_blend_skirt = 0.595
+noise = SubResource("FastNoiseLite_mr2ks")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tdc2q"]
+shader = ExtResource("1_g1gxk")
+shader_parameter/zoom = 6.0
+shader_parameter/timeScale = 0.01
+shader_parameter/color_a = Color(0.033, 0.30525, 0.33, 1)
+shader_parameter/color_b = Color(0.666667, 0.666667, 0.498039, 1)
+shader_parameter/noiseImage = SubResource("NoiseTexture3D_v4ro6")
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -15,7 +31,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="."]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_tdc2q")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
